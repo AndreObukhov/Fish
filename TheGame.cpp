@@ -72,24 +72,41 @@ public:
 	Boat(const float& x, const float& v) {
 		x_coordinate = x;
 		speed = v;
+		SetSprite();
+		//std::cout << "boat created" << std::endl;
+ 	}
+
+	void SetSprite() {
+		if (!tex.loadFromFile("C:/Users/User/MIPT/TheGame/speed-boat.png")) {
+			std::cout << "boat" << std::endl;
+			exit(-1);
+		}
+		//boat_.setTexture(tex);
 	}
 
 	void draw(const float& t, sf::RenderWindow& wind) {
 		x_coordinate += speed * t;
-		sf::RectangleShape boat;
+
+		/*sf::RectangleShape boat;
 		boat.setSize({ 100.f, 20.f });
 		boat.setPosition(x_coordinate, 20.f);
-		boat.setFillColor(sf::Color(128, 128, 0));
-		wind.draw(boat);
+		boat.setFillColor(sf::Color(128, 128, 0));*/
+
+		//sf::Sprite boat(boat_figure);
+
+		boat_.setTexture(tex);
+		boat_.setScale(0.2f, 0.2f);
+		boat_.setPosition(x_coordinate, -100.f);
+		wind.draw(boat_);
 	}
 
-	~Boat() {};
+	//~Boat() {};
 
 protected:
 	float x_coordinate;
 	float speed;
-	
-	//sf::Sprite boat_figure;
+	sf::Sprite boat_;
+	sf::Texture tex;
 	//сюда добавить текстуру
 };
 
@@ -130,17 +147,62 @@ public:
 
 private:
 	bool hook = true;
-	float time_attacked;
+	//float time_attacked;
 	float depth = 0;
 };
 
+class Background {				//responsible for setting background image and drawing bubbles
+public:
+	Background(sf::RenderWindow& window) {
+		if (!BackgroundTexture.loadFromFile("C:/Users/User/MIPT/TheGame/panorama.jpg"))
+		{
+			std::cout << "background" << std::endl;
+			exit(-1);
+		}
+		else
+		{
+			TextureSize = BackgroundTexture.getSize(); //Get size of texture.
+			WindowSize = window.getSize();
 
-int main()
-{
-	sf::Clock clock;
+			//можно слегка растянуть фон :)
+			//float ScaleX = (float)WindowSize.x / TextureSize.x;
 
-	sf::RenderWindow window(sf::VideoMode(1200, 720), "Best game ever!");
+			background.setTexture(BackgroundTexture);
+			//background.setScale(ScaleX, ScaleY);      //Set scale.  
+		}
+	}
 
+	void Bubbles(const float& time, sf::RenderWindow& window) {
+		//initializing bubbles vector
+		float make_x = 200 + rand() % 201;
+		sf::Vector2f pos(make_x, 500.0);
+
+		//making bubbles at random interval
+		if (time > bubble_creation_time) {
+			bubbles.push_back(Bubble(pos, time));
+			float dt = 1.5 + 0.1 * (rand() % 11);
+			bubble_creation_time += dt;
+		}
+
+		//drawing bubbles and erasing unneeded ones
+		for (int i = 0; i < bubbles.size(); i++) {
+			bubbles[i].Draw(window, time);
+			if (!IsInsideWindow(window.getSize(), bubbles[i].GetPos(time))) {
+				bubbles.erase(bubbles.begin() + i);
+			}
+		}
+
+	}
+
+	void draw(sf::RenderWindow& window) {
+		window.draw(background);
+	}
+
+	sf::Vector2u GetBackgroundTextureSize() const {
+		return TextureSize;
+	}
+
+private:
 	//background
 	sf::Texture BackgroundTexture;
 	sf::Sprite background;
@@ -148,23 +210,20 @@ int main()
 	sf::Vector2u TextureSize;  //Added to store texture size.
 	sf::Vector2u WindowSize;   //Added to store window size.
 
-	if (!BackgroundTexture.loadFromFile("C:/Users/User/MIPT/TheGame/panorama.jpg"))
-	{
-		std::cout << "background" << std::endl;
-		exit(-1);
-	}
-	else
-	{
-		TextureSize = BackgroundTexture.getSize(); //Get size of texture.
-		WindowSize = window.getSize();
+	//bubbles
+	std::vector<Bubble> bubbles;
+	double bubble_creation_time = 0;
+};
 
-		//float ScaleX = (float)WindowSize.x / TextureSize.x;
-		//float ScaleY = (float)WindowSize.y / TextureSize.y;
+int main()
+{
+	sf::Clock clock;
 
-		background.setTexture(BackgroundTexture);
-		//background.setScale(ScaleX, ScaleY);      //Set scale.  
-	}
-	//end of background
+	sf::RenderWindow window(sf::VideoMode(1200, 720), "Best game ever!");
+
+	Background background(window);
+
+	sf::Vector2u TextureSize = background.GetBackgroundTextureSize();
 
 	//setting view
 	sf::View view_;
@@ -175,7 +234,7 @@ int main()
 	const float YRatio = (TextureSize.y - view_.getSize().y) / (TextureSize.y);		//магия для того, чтобы не вылетать
 																					//за текстуру фона
 
-	//this is Sprite that we can control
+	//this is Sprite that we can control --- задание спрайта уйдет в конструктор рыбы
 	sf::Texture texture;
 
 	if (!texture.loadFromFile("C:/Users/User/MIPT/TheGame/FISH.png")) {
@@ -188,13 +247,8 @@ int main()
 
 	circle.setPosition(100, 100);
 
-	//bubbles are here:)
-	std::vector<Bubble> bubbles;
-	int bubble_count = 0;
-
 	//boat
 	FisherBoat boat(100.f, 0.001);
-
 
 	while (window.isOpen())
 	{
@@ -207,50 +261,28 @@ int main()
 				window.close();
 		}
 
+		window.clear();
+
 		//moving sprite towards left side of the window
 		//sf::Vector2f deltaX(view_.getSize().x / 3, 0.f);
 		//sf::Vector2f ratioY(0.f, )
 
 		sf::Vector2f view_Center;
+
 		view_Center.x = circle.getPosition().x + view_.getSize().x/ 3.f;
-
 		view_Center.y = (TextureSize.y / 2.f) + ((circle.getPosition().y - TextureSize.y / 2)*YRatio);
-
-		//std::cout << circle.getTexture()->getSize().y << std::endl;
-		
-
-		// *(abs(circle.getPosition().y - BackgroundTexture.getSize().y / 2) *
-			//((window.getSize().y - BackgroundTexture.getSize().y) / BackgroundTexture.getSize().y));
 
 		//view_.setCenter(circle.getPosition() + deltaX);		//making camera follow our sprite
 
 		view_.setCenter(view_Center);
-
 		window.setView(view_);						//!!!Dont forget or view is useless
-		
-		window.clear();
-		window.draw(background);
-		
-		//making bubbles
-		float make_x = 200 + rand() % 201;
-		sf::Vector2f pos(make_x, 500.0);
 
-
-		if (time.asSeconds() > bubble_count) {
-			bubbles.push_back(Bubble(pos, time.asSeconds()));
-			float dt = 1.5 + 0.1 * (rand() % 11);
-			bubble_count += dt;
-		}
-		for (int i = 0; i < bubbles.size(); i ++) {
-			bubbles[i].Draw(window, time.asSeconds());
-			if (!IsInsideWindow(window.getSize(), bubbles[i].GetPos(time.asSeconds()) )) {
-				bubbles.erase(bubbles.begin() + i);
-			}
-		}
-		//std::cout << bubbles.size() << std::endl;
+		background.draw(window);
+		background.Bubbles(time.asSeconds(), window);
 
 		//boat - легко сделать вектор лодок, атакующих в разное время
 		boat.draw(time.asSeconds(), window);
+
 
 		sf::Vector2f hook_pos;
 		if (boat.IsAttacking()) {
@@ -286,6 +318,7 @@ int main()
 
 		window.draw(circle);
 
+		//fish movement
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
 			circle.move(0, -0.2);
 			if (!IsInsideWindow(TextureSize, circle.getPosition())) {
