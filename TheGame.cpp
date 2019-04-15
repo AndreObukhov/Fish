@@ -1,16 +1,14 @@
-﻿// TheGame.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
-//
-
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "SFML/Graphics.hpp"
+#include "Menu.h"
+#include "BackGround.h"
 
 #include <iostream>
 #include <vector>
 #include <cmath>
 #include <map>
 #include <cstdlib>
-
 
 //сюда добавить передачу текущего размера рыбы, чтобы она не заплывала плавником за границу аквариума.
 bool IsInsideWindow(sf::Vector2u WSize, sf::Vector2f Position) {
@@ -33,39 +31,6 @@ bool IsOnTheHook(const sf::Sprite& sprite, const sf::Vector2f& hook_pos) {
 	return false;
 }
 
-class Bubble {
-public:
-	Bubble(const sf::Vector2f& pos, const float& t) {
-		coordinates = pos;
-		time_created = t;
-		speed.y = (float)-0.05;
-		//speed.x = 0.1* (-10 + rand() % 20);
-	}
-
-	sf::Vector2f GetPos(const float& current_time) {
-		float dt = current_time - time_created;
-
-		//making bubbles go like sin(t)
-		speed.x = sin(5 * current_time) / (5 + 10 * dt);
-
-		coordinates = coordinates + speed;
-		return coordinates;
-	}
-
-	void Draw(sf::RenderWindow& wind, const float& current_time) {
-		coordinates = GetPos(current_time);
-
-		sf::CircleShape bub(5.f);
-		bub.setFillColor(sf::Color(255, 255, 255, 90));
-		bub.setPosition(coordinates.x, coordinates.y);
-		wind.draw(bub);
-	}
-
-private:
-	sf::Vector2f coordinates;
-	sf::Vector2f speed;
-	float time_created;
-};
 
 class Boat {
 public:
@@ -77,7 +42,7 @@ public:
  	}
 
 	void SetSprite() {
-		if (!tex.loadFromFile("C:/Users/User/MIPT/TheGame/speed-boat.png")) {
+		if (!tex.loadFromFile("C:/Users/User/MIPT/TheGame/Images/speed-boat.png")) {
 			std::cout << "boat" << std::endl;
 			exit(-1);
 		}
@@ -151,77 +116,15 @@ private:
 	float depth = 0;
 };
 
-class Background {				//responsible for setting background image and drawing bubbles
-public:
-	Background(sf::RenderWindow& window) {
-		if (!BackgroundTexture.loadFromFile("C:/Users/User/MIPT/TheGame/panorama.jpg"))
-		{
-			std::cout << "background" << std::endl;
-			exit(-1);
-		}
-		else
-		{
-			TextureSize = BackgroundTexture.getSize(); //Get size of texture.
-			WindowSize = window.getSize();
-
-			//можно слегка растянуть фон :)
-			//float ScaleX = (float)WindowSize.x / TextureSize.x;
-
-			background.setTexture(BackgroundTexture);
-			//background.setScale(ScaleX, ScaleY);      //Set scale.  
-		}
-	}
-
-	void Bubbles(const float& time, sf::RenderWindow& window) {
-		//initializing bubbles vector
-		float make_x = 200 + rand() % 201;
-		sf::Vector2f pos(make_x, 500.0);
-
-		//making bubbles at random interval
-		if (time > bubble_creation_time) {
-			bubbles.push_back(Bubble(pos, time));
-			float dt = 1.5 + 0.1 * (rand() % 11);
-			bubble_creation_time += dt;
-		}
-
-		//drawing bubbles and erasing unneeded ones
-		for (int i = 0; i < bubbles.size(); i++) {
-			bubbles[i].Draw(window, time);
-			if (!IsInsideWindow(window.getSize(), bubbles[i].GetPos(time))) {
-				bubbles.erase(bubbles.begin() + i);
-			}
-		}
-
-	}
-
-	void draw(sf::RenderWindow& window) {
-		window.draw(background);
-	}
-
-	sf::Vector2u GetBackgroundTextureSize() const {
-		return TextureSize;
-	}
-
-private:
-	//background
-	sf::Texture BackgroundTexture;
-	sf::Sprite background;
-
-	sf::Vector2u TextureSize;  //Added to store texture size.
-	sf::Vector2u WindowSize;   //Added to store window size.
-
-	//bubbles
-	std::vector<Bubble> bubbles;
-	double bubble_creation_time = 0;
-};
 
 int main()
 {
-	sf::Clock clock;
-
 	sf::RenderWindow window(sf::VideoMode(1200, 720), "Best game ever!");
 
-	Background background(window);
+	ShowMenu(window);		//go to menu.cpp
+
+	sf::Clock clock;
+	Background background(window, 1);
 
 	sf::Vector2u TextureSize = background.GetBackgroundTextureSize();
 
@@ -237,7 +140,7 @@ int main()
 	//this is Sprite that we can control --- задание спрайта уйдет в конструктор рыбы
 	sf::Texture texture;
 
-	if (!texture.loadFromFile("C:/Users/User/MIPT/TheGame/FISH.png")) {
+	if (!texture.loadFromFile("C:/Users/User/MIPT/TheGame/Images/FISH.png")) {
 		std::cout << "texture" << std::endl;
 		exit(-1);
 	}
