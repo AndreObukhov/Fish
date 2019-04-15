@@ -9,6 +9,10 @@
 #include <cmath>
 #include <map>
 #include <cstdlib>
+#include <fstream>
+
+
+const std::string hook_image = "C:/Users/User/MIPT/TheGame/Images/hook.png";
 
 //сюда добавить передачу текущего размера рыбы, чтобы она не заплывала плавником за границу аквариума.
 bool IsInsideWindow(sf::Vector2u WSize, sf::Vector2f Position) {
@@ -23,9 +27,9 @@ bool IsInsideWindow(sf::Vector2u WSize, sf::Vector2f Position) {
 
 //maybe написать единую (шаблонную?) функцию для проверки взаимного расположения рыба-окно, рыба-крючок, рыба-другая рыба
 
-bool IsOnTheHook(const sf::Sprite& sprite, const sf::Vector2f& hook_pos) {
-	if (abs(sprite.getPosition().x - hook_pos.x) < sprite.getTexture()->getSize().x * sprite.getScale().x &&
-		abs(sprite.getPosition().y - hook_pos.y) < sprite.getTexture()->getSize().y * sprite.getScale().y) {
+bool IsOnTheHook(const sf::Sprite& sprite, const sf::Vector2f& hook_pos) {		//с делением на 2 работает +- как надо
+	if (abs(sprite.getPosition().x - hook_pos.x) < sprite.getTexture()->getSize().x * sprite.getScale().x/2 &&
+		abs(sprite.getPosition().y - hook_pos.y) < sprite.getTexture()->getSize().y * sprite.getScale().y/2) {
 		return true;
 	}
 	return false;
@@ -38,7 +42,6 @@ public:
 		x_coordinate = x;
 		speed = v;
 		SetSprite();
-		//std::cout << "boat created" << std::endl;
  	}
 
 	void SetSprite() {
@@ -52,16 +55,10 @@ public:
 	void draw(const float& t, sf::RenderWindow& wind) {
 		x_coordinate += speed * t;
 
-		/*sf::RectangleShape boat;
-		boat.setSize({ 100.f, 20.f });
-		boat.setPosition(x_coordinate, 20.f);
-		boat.setFillColor(sf::Color(128, 128, 0));*/
-
-		//sf::Sprite boat(boat_figure);
-
 		boat_.setTexture(tex);
 		boat_.setScale(0.2f, 0.2f);
 		boat_.setPosition(x_coordinate, -100.f);
+
 		wind.draw(boat_);
 	}
 
@@ -75,10 +72,16 @@ protected:
 	//сюда добавить текстуру
 };
 
-class FisherBoat : public Boat {			//на конец "лески" нужно повесить спрайт крючка 
+class FisherBoat : public Boat {
 public:
-	FisherBoat(const float& x, const float& v) : Boat(x, v) {};			//так же можно передать максимальную глубину крючка
-
+	FisherBoat(const float& x, const float& v) : Boat(x, v) {		//так же можно передать максимальную глубину крючка
+		if (!hook_texture.loadFromFile(hook_image)) {
+			std::cout << "hook" << std::endl;
+			exit(-1);
+		}
+		hook_sprite.setTexture(hook_texture);
+		hook_sprite.setScale(0.05f, 0.05f);
+	};			
 	bool IsAttacking() {
 		if (depth >= 20) {
 			return true;
@@ -103,6 +106,9 @@ public:
 			depth -= (float) 0.5;
 		}
 
+		hook_sprite.setPosition(x_coordinate - 11.f, depth);			//11 - магия, благодаря которой все совпадает :)
+		wind.draw(hook_sprite);
+
 		wind.draw(line, 2, sf::Lines);
 		if (depth == 300) {
 			hook = false;
@@ -111,6 +117,8 @@ public:
 	}
 
 private:
+	sf::Texture hook_texture;
+	sf::Sprite hook_sprite;
 	bool hook = true;
 	//float time_attacked;
 	float depth = 0;
@@ -153,6 +161,15 @@ int main()
 	//boat
 	FisherBoat boat(100.f, 0.001);
 
+	//text that contains current score
+	sf::Font font;
+	font.loadFromFile(font_file);
+	sf::Text score_text;
+	score_text.setFont(font);
+	score_text.setCharacterSize(20);
+
+	float score;
+
 	while (window.isOpen())
 	{
 		sf::Time time = clock.getElapsedTime();
@@ -160,8 +177,13 @@ int main()
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
-			if (event.type == sf::Event::Closed)
+			if (event.type == sf::Event::Closed) {
+				score = time.asSeconds();
+				std::ofstream output("C:/Users/User/MIPT/TheGame/bin/scores.txt", std::ios::app);
+				output << score << std::endl;
+
 				window.close();
+			}
 		}
 
 		window.clear();
@@ -182,6 +204,14 @@ int main()
 
 		background.draw(window);
 		background.Bubbles(time.asSeconds(), window);
+
+		//благодаря всему этому, текст привязан к правому верхнему углу
+		score_text.setString("score- ");
+		sf::Vector2i text_pos;
+		text_pos.x = window.getSize().x - score_text.getLocalBounds().width * 2 - 50;
+		text_pos.y = 0;
+		score_text.setPosition(window.mapPixelToCoords(text_pos));
+		window.draw(score_text);
 
 		//boat - легко сделать вектор лодок, атакующих в разное время
 		boat.draw(time.asSeconds(), window);
@@ -238,6 +268,9 @@ int main()
 			circle.move(0.2, 0);
 			if (!IsInsideWindow(TextureSize, circle.getPosition())) {
 				circle.move(-0.2, 0);
+				background.AddBackground();
+				TextureSize = background.GetBackgroundTextureSize();		//добавляет очередной кусок фона
+																			//нужно чтобы слегка зарание))
 			}
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {

@@ -3,7 +3,7 @@
 #include "BackGround.h"
 
 Background::Background(sf::RenderWindow& window, const int& mode) {
-	std::string path;
+	std::string path;		//1 is for main game background, 2 is for menu background
 	if (mode == 1) {
 		path = background_game;
 	}
@@ -14,22 +14,41 @@ Background::Background(sf::RenderWindow& window, const int& mode) {
 		std::cout << "background" << std::endl;
 		exit(-1);
 	}
+
 	TextureSize = BackgroundTexture.getSize(); //Get size of texture.
-	WindowSize = window.getSize();
 
 	if (mode == 2) {
+		WindowSize = window.getSize();			//вписываем фон меню строго в окно
 		//можно слегка растянуть фон :)
 		float ScaleX = (float)WindowSize.x / TextureSize.x;
 		float ScaleY = (float)WindowSize.y / TextureSize.y;
 		background.setScale(ScaleX, ScaleY);      //Set scale.  
+		background.setTexture(BackgroundTexture);
 	}
 	
-	background.setTexture(BackgroundTexture);
+	if (mode == 1) {
+		for (int i = 0; i < 1; ++i) {
+			sf::Sprite one_piece;
+			one_piece.setTexture(BackgroundTexture);
+			one_piece.setPosition(BackgroundTexture.getSize().x * i, 0.f);
+			long_background.push_back(one_piece);
+		}
+	}
 }
+
+
+void Background::AddBackground() {
+	sf::Sprite one_piece;
+	one_piece.setTexture(BackgroundTexture);
+	one_piece.setPosition(BackgroundTexture.getSize().x * long_background.size(), 0.f);
+	long_background.push_back(one_piece);
+}
+
+
 
 void Background::Bubbles(const float& time, sf::RenderWindow& window) {
 	//initializing bubbles vector
-	float make_x = 200 + rand() % 201;
+	float make_x = 200.f + rand() % 201;
 	sf::Vector2f pos(make_x, 500.0);
 
 	//making bubbles at random interval
@@ -49,11 +68,26 @@ void Background::Bubbles(const float& time, sf::RenderWindow& window) {
 }
 
 void Background::draw(sf::RenderWindow& window) {
-	window.draw(background);
+	if (long_background.empty()) {
+		window.draw(background);
+	}
+	else {
+		for (int i = 0; i < long_background.size(); ++i) {
+			window.draw(long_background[i]);
+		}
+	}
 }
 
 sf::Vector2u Background::GetBackgroundTextureSize() const {
-	return TextureSize;
+	if (long_background.empty()) {
+		return TextureSize;
+	}
+	else {
+		sf::Vector2u res;
+		res.y = TextureSize.y;
+		res.x = TextureSize.x * long_background.size();
+		return res;
+	}
 }
 
 Bubble::Bubble(const sf::Vector2f& pos, const float& t) {
@@ -81,5 +115,3 @@ void Bubble::Draw(sf::RenderWindow& wind, const float& current_time) {
 	bub.setPosition(coordinates.x, coordinates.y);
 	wind.draw(bub);
 }
-
-

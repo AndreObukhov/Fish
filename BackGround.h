@@ -28,6 +28,8 @@ class Background {				//responsible for setting background image and drawing bub
 public:
 	Background(sf::RenderWindow& window, const int& mode);
 
+	void AddBackground();
+
 	void Bubbles(const float& time, sf::RenderWindow& window);
 
 	void draw(sf::RenderWindow& window);
@@ -38,6 +40,7 @@ private:
 	//background
 	sf::Texture BackgroundTexture;
 	sf::Sprite background;
+	std::vector<sf::Sprite> long_background;
 
 	sf::Vector2u TextureSize;  //Added to store texture size.
 	sf::Vector2u WindowSize;   //Added to store window size.

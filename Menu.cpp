@@ -49,14 +49,31 @@ void Button::SetVectors() {
 	Right_Bottom.y = button_sprite.getPosition().y + button_texture.getSize().y*button_sprite.getScale().y;
 }
 
+void ShowHighscores() {
+	std::vector<float> results;
+	float num;
+
+	std::ifstream file("C:/Users/User/MIPT/TheGame/bin/scores.txt");
+	for(int i = 0; i < 5; ++i) {			//нужно разобраться с циклом!!
+		file >> num;
+		results.push_back(num);
+	}
+	//std::cout << results.size();
+	std::sort(results.begin(), results.end());
+
+	for (const auto&f : results) {
+		std::cout << f << std::endl;
+	}
+}
+
 void ShowMenu(sf::RenderWindow& window) {
-	Button ButtonStart("create new game", 200.f);
+	Button ButtonStart("start new game", 200.f);
 	Button Highscore("show highscore", 300.f);
 	Button Exit("exit", 400.f);
 	//сюда же добавить выбор одно/многопользовательского режима
 
 	Background background(window, 2);
-
+	
 	while (window.isOpen()) {
 
 		sf::Event event;
@@ -90,6 +107,7 @@ void ShowMenu(sf::RenderWindow& window) {
 
 			if (Highscore.IsClicked(MousePos)) {
 				std::cout << "no highscores yet" << std::endl;
+				//ShowHighscores();
 			}
 
 			if (Exit.IsClicked(MousePos)) {

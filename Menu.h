@@ -1,6 +1,11 @@
 #pragma once
 
 #include <iostream>
+#include <fstream>
+#include <vector>
+#include <algorithm>
+#include <string>
+
 #include "SFML/Graphics.hpp"
 
 const std::string font_file = "C:/Users/User/MIPT/TheGame/varsity_regular.ttf";
