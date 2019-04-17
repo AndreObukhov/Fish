@@ -50,20 +50,23 @@ void Button::SetVectors() {
 }
 
 void ShowHighscores() {
-	std::vector<float> results;
+	//std::vector<float> results;
 	float num;
 
+	//пока штука показывает 5 лучших результатов
 	std::ifstream file("C:/Users/User/MIPT/TheGame/bin/scores.txt");
 	for(int i = 0; i < 5; ++i) {			//нужно разобраться с циклом!!
 		file >> num;
-		results.push_back(num);
+		std::cout << num << std::endl;		//уже отсортированы в конце игры
 	}
+	file.close();
+	/*
 	//std::cout << results.size();
 	std::sort(results.begin(), results.end());
 
 	for (const auto&f : results) {
 		std::cout << f << std::endl;
-	}
+	}*/
 }
 
 void ShowMenu(sf::RenderWindow& window) {
@@ -107,14 +110,48 @@ void ShowMenu(sf::RenderWindow& window) {
 
 			if (Highscore.IsClicked(MousePos)) {
 				std::cout << "no highscores yet" << std::endl;
-				//ShowHighscores();
+				ShowHighscores();
 			}
 
 			if (Exit.IsClicked(MousePos)) {
+				std::cout << "See you next time" << std::endl;
 				exit(0);
 			}
 		}
 
 		window.display();
+	}
+}
+
+void ShowExitScreen(sf::RenderWindow& window, const int& score) {
+	Background background(window, 2);
+	Button Exit("exit", 400.f);
+
+	while (window.isOpen()) {
+
+		sf::Event event;
+		while (window.pollEvent(event))
+		{
+			if (event.type == sf::Event::Closed) {
+				window.close();
+				exit(0);
+			}
+		}
+
+		window.clear();
+		background.draw(window);
+
+		Exit.draw(window);
+
+		sf::Vector2i MousePos = sf::Mouse::getPosition(window);
+
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+			if (Exit.IsClicked(MousePos)) {
+				std::cout << "See you next time" << std::endl;
+				exit(0);
+			}
+		}
+		window.display();
+
 	}
 }

@@ -3,6 +3,7 @@
 #include "SFML/Graphics.hpp"
 #include "Menu.h"
 #include "BackGround.h"
+#include "Fish.h"
 
 #include <iostream>
 #include <vector>
@@ -10,9 +11,50 @@
 #include <map>
 #include <cstdlib>
 #include <fstream>
+#include <sstream>
 
 
 const std::string hook_image = "C:/Users/User/MIPT/TheGame/Images/hook.png";
+
+//used to convert current score into string to show it in top corner.
+std::string to_str(int a) {
+	std::ostringstream ostr;
+	ostr << a;
+	return ostr.str();
+}
+
+void ManageRecords(const float& score) {
+	std::vector<float> results;
+	std::ifstream ifile("C:/Users/User/MIPT/TheGame/bin/scores.txt");
+
+	while (!ifile.eof()) {
+		float i;
+		ifile >> i;
+		//std::cout << i << std::endl;
+		results.push_back(i);
+	}
+	ifile.close();
+
+	results.pop_back();		//как сделать без этого..?
+	results.push_back(score);
+	//сортировка по убыванию 
+	std::sort(results.begin(), results.end(), 
+		[](const float& f1, const float& f2) 
+		{return f2 < f1; });
+	results.pop_back();
+
+	std::ofstream ofile("C:/Users/User/MIPT/TheGame/bin/scores.txt", std::ofstream::trunc);		//чистим файл от старых значений
+	for (const auto& f : results) {
+		ofile << f << '\n';
+	}
+
+	ofile.close();
+
+	//возможно, стоит делать файл постоянного размера 
+	//то есть, хранить 10 лучших результатов
+	//остальное выбрасывать на стадии записи в файл
+	//решаестя одним pop_back после сортировки, т.к. добавляем один последний счет
+}
 
 //сюда добавить передачу текущего размера рыбы, чтобы она не заплывала плавником за границу аквариума.
 bool IsInsideWindow(sf::Vector2u WSize, sf::Vector2f Position) {
@@ -144,19 +186,10 @@ int main()
 
 	const float YRatio = (TextureSize.y - view_.getSize().y) / (TextureSize.y);		//магия для того, чтобы не вылетать
 																					//за текстуру фона
+	
+	ControlledFish fish({ 100, 100 }, FishType::L_1);
+	FishGeneration gen;
 
-	//this is Sprite that we can control --- задание спрайта уйдет в конструктор рыбы
-	sf::Texture texture;
-
-	if (!texture.loadFromFile("C:/Users/User/MIPT/TheGame/Images/FISH.png")) {
-		std::cout << "texture" << std::endl;
-		exit(-1);
-	}
-
-	sf::Sprite circle(texture);		//персонаж
-	circle.setScale(0.25f, 0.25f);
-
-	circle.setPosition(100, 100);
 
 	//boat
 	FisherBoat boat(100.f, 0.001);
@@ -167,6 +200,7 @@ int main()
 	sf::Text score_text;
 	score_text.setFont(font);
 	score_text.setCharacterSize(20);
+	
 
 	float score;
 
@@ -178,35 +212,43 @@ int main()
 		while (window.pollEvent(event))
 		{
 			if (event.type == sf::Event::Closed) {
-				score = time.asSeconds();
-				std::ofstream output("C:/Users/User/MIPT/TheGame/bin/scores.txt", std::ios::app);
-				output << score << std::endl;
-
+				score = fish.GetScore();
+				/*std::ofstream output("C:/Users/User/MIPT/TheGame/bin/scores.txt", std::ios::app);
+				output << score << std::endl;*/
+				ManageRecords(score);
 				window.close();
 			}
 		}
 
 		window.clear();
 
-		//moving sprite towards left side of the window
-		//sf::Vector2f deltaX(view_.getSize().x / 3, 0.f);
-		//sf::Vector2f ratioY(0.f, )
-
 		sf::Vector2f view_Center;
 
-		view_Center.x = circle.getPosition().x + view_.getSize().x/ 3.f;
-		view_Center.y = (TextureSize.y / 2.f) + ((circle.getPosition().y - TextureSize.y / 2)*YRatio);
+		//making camera follow our sprite
+		view_Center.x = fish.GetSprite().getPosition().x + view_.getSize().x / 3.f;
+		view_Center.y = (TextureSize.y / 2.f) + ((fish.GetSprite().getPosition().y - TextureSize.y / 2) * YRatio);
 
-		//view_.setCenter(circle.getPosition() + deltaX);		//making camera follow our sprite
-
-		view_.setCenter(view_Center);
+		
+		view_.setCenter(view_Center);				
 		window.setView(view_);						//!!!Dont forget or view is useless
 
 		background.draw(window);
 		background.Bubbles(time.asSeconds(), window);
 
+		//рисуем рыб
+		fish.Draw(window);
+		gen.GenerateFish(time.asSeconds(), fish.GetPosition());			//сюда передаем фон, чтобы с его обновлением рисовалось корректно
+		gen.Draw(time.asSeconds(), window);
+
+		if (fish.DetectFish(gen.autoFish)) {
+			std::cout << "YOU ARE DEAD!" << std::endl;
+			//ShowExitScreen(window, fish.GetScore());
+
+			// написать какой-то метод EndGame(), который будет все останавливать
+		}
+
 		//благодаря всему этому, текст привязан к правому верхнему углу
-		score_text.setString("score- ");
+		score_text.setString(to_str(fish.GetScore()));
 		sf::Vector2i text_pos;
 		text_pos.x = window.getSize().x - score_text.getLocalBounds().width * 2 - 50;
 		text_pos.y = 0;
@@ -220,7 +262,7 @@ int main()
 		sf::Vector2f hook_pos;
 		if (boat.IsAttacking()) {
 			hook_pos = boat.Attack(window);
-			if (IsOnTheHook(circle, hook_pos)) {
+			if (IsOnTheHook(fish.GetSprite(), hook_pos)) {
 				std::cout << "You fucked up" << std::endl;
 			}
 		}
@@ -228,78 +270,8 @@ int main()
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
 			boat.InitAttack();
 		}
-
-
-		// get the current mouse position in the window
-		sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
-		// convert it to world coordinates
-		sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);		//согласуем координаты в окне с глобальными координатами
-
-
-		sf::Vector2u CircleSize = circle.getTexture()->getSize();
-		circle.setOrigin(CircleSize.x / 2, CircleSize.y / 2);
-
-		//sf::Vector2i MousePos = sf::Mouse::getPosition(window);
-
-		sf::Vector2f center = circle.getPosition();				//где находится наш перс
-
-		sf::Vector2f d = sf::Vector2f(worldPos.x, worldPos.y) - center;
-
-		const double Pi = 3.14159f;
-		double angle = 180 + atan2f(d.y, d.x) * 180.0 / Pi;
-		circle.setRotation(angle);
-
-		window.draw(circle);
-
-		//fish movement
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-			circle.move(0, -0.2);
-			if (!IsInsideWindow(TextureSize, circle.getPosition())) {
-				circle.move(0, 0.2);
-			}
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-			circle.move(0, 0.2);
-			if (!IsInsideWindow(TextureSize, circle.getPosition())) {
-				circle.move(0, -0.2);
-			}
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-			circle.move(0.2, 0);
-			if (!IsInsideWindow(TextureSize, circle.getPosition())) {
-				circle.move(-0.2, 0);
-				background.AddBackground();
-				TextureSize = background.GetBackgroundTextureSize();		//добавляет очередной кусок фона
-																			//нужно чтобы слегка зарание))
-			}
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-			circle.move(-0.2, 0);
-			if (!IsInsideWindow(TextureSize, circle.getPosition())) {
-				circle.move(0.2, 0);
-			}
-		}
-
-
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)) {		//laser
-			sf::Vertex line[] =
-			{
-				sf::Vertex(center),
-				//sf::Vertex(sf::Vector2f(MousePos.x, MousePos.y))
-				sf::Vertex(sf::Vector2f(worldPos.x, worldPos.y))
-			};
-
-			line->color = (sf::Color::Red);
-			window.draw(line, 2, sf::Lines);
-		}
-
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-			circle.scale(1.002, 1.002);
-		}
-
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
-			circle.scale(0.995, 0.995);
-		}
+		//сюда добавляю передачу фона, чтобы вовремя его продлевать
+		fish.Control(TextureSize, window, background);
 
 		window.display();
 	}

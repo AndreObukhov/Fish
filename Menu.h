@@ -34,3 +34,5 @@ private:
 };
 
 void ShowMenu(sf::RenderWindow& window);
+
+void ShowExitScreen(sf::RenderWindow& window, const int& score);
