@@ -153,7 +153,7 @@ void ControlledFish::Eat(std::vector<AutomaticFish>& autoFish, std::vector<Autom
 	delta_pts_ = type_points[(*it_del).GetType()];
 
 	points_ += delta_pts_;
-	plus_pts_string = "+ " + to_str(delta_pts_);
+	plus_pts_string = "+ " + to_str(delta_pts_);		//init'ing the string only once each time
 
 	std::cout << "current points = " << points_ << std::endl;
 
@@ -190,7 +190,6 @@ bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish, const floa
 	while (it != autoFish.end()) {
 		if (isTouched(*it)) {
 			if (type_ >= (*it).GetType()) {
-				//Eat(autoFish, it);
 				to_eat = it;
 				poedanie = true;
 			}
@@ -226,7 +225,7 @@ void ControlledFish::Draw(sf::RenderWindow &window, const float& time) {
 	fish_.setPosition(pos_.x, pos_.y);
 	window.draw(fish_);
 
-	if (time - time_fish_eaten_ < 1.0)
+	if (time - time_fish_eaten_ < 0.75f)
 		PointsAnimation(window, time);
 }
 

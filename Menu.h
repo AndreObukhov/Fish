@@ -32,15 +32,11 @@ private:
 	sf::Texture button_texture;		//"фон" кнопки
 	sf::Sprite button_sprite;
 	
-	WindowText button_text;
+	WindowText button_text;			//text on a button made in a new way
 
-	//sf::Font button_font;			//текст на кнопке
-	//sf::Text button_text;
 	const std::string button_name;
 	
 	float y_position;				//где по высоте в столбике кнопок (разность лучше делать около 100)
 };
 
-void ShowMenu(sf::RenderWindow& window);
-
-void ShowExitScreen(sf::RenderWindow& window, const int& score);
+void ShowMenu(sf::RenderWindow& window, bool EntryMenu, const int& score);

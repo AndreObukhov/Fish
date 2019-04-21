@@ -81,6 +81,7 @@ public:
 	//сюда добавляю передачу фона, чтобы вовремя его продлевать + TextureSize по ссылке - она меняется с продолжением фона
 	void Control(sf::Vector2u& TextureSize, sf::RenderWindow& window, Background& background);
 	
+	//!!! -- added time to Eat, Draw, Detect to make "plus points" animation
 	void Draw(sf::RenderWindow& window, const float& time);
 
 	bool isTouched(const AutomaticFish& autoFish);

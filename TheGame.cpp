@@ -169,9 +169,10 @@ private:
 
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(1200, 720), "Best game ever!");
+	sf::RenderWindow window(sf::VideoMode(1500, 900), "Best game ever!");
 
-	ShowMenu(window);		//go to menu.cpp
+	ShowMenu(window, true, 0);		//go to menu.cpp
+									//true means that menu for game beginning is displayed
 
 	sf::Clock clock;
 	Background background(window, 1);
@@ -235,7 +236,7 @@ int main()
 		//adding time into function for score animation
 		if (fish.DetectFish(gen.autoFish, time.asSeconds())) {
 			std::cout << "YOU ARE DEAD!" << std::endl;
-			ShowExitScreen(window, fish.GetScore());
+			ShowMenu(window, false, fish.GetScore());
 
 			// написать какой-то метод EndGame(), который будет все останавливать
 		}

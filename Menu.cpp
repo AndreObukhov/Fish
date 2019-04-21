@@ -42,33 +42,47 @@ void Button::SetVectors() {
 	Right_Bottom.y = button_sprite.getPosition().y + button_texture.getSize().y*button_sprite.getScale().y;
 }
 
-void ShowHighscores() {
-	//std::vector<float> results;
+
+//finally done right
+std::string GetHighscores() {
+	//reading results
 	float num;
+
+	std::string score_string = "best scores list:\n";
 
 	//пока штука показывает 5 лучших результатов
 	std::ifstream file("C:/Users/User/MIPT/TheGame/bin/scores.txt");
-	for(int i = 0; i < 5; ++i) {			//нужно разобраться с циклом!!
+	for (int i = 0; i < 5; ++i) {			//нужно разобраться с циклом!!
 		file >> num;
-		std::cout << num << std::endl;		//уже отсортированы в конце игры
+		score_string += to_str(num);
+		score_string += "\n";
+
+		//std::cout << num << std::endl;		//уже отсортированы в конце игры
 	}
 	file.close();
-	/*
-	//std::cout << results.size();
-	std::sort(results.begin(), results.end());
 
-	for (const auto&f : results) {
-		std::cout << f << std::endl;
-	}*/
+	return score_string;
 }
 
-void ShowMenu(sf::RenderWindow& window) {
+
+void ShowMenu(sf::RenderWindow& window, bool EntryMenu, const int& score) {
 	Button ButtonStart("start new game", 200.f);
 	Button Highscore("show highscore", 300.f);
 	Button Exit("exit", 400.f);
+	Button Back("back", 700.f);
+
 	//сюда же добавить выбор одно/многопользовательского режима
 
 	Background background(window, 2);
+	
+	//sets initial view that allows to display exit menu correctly
+	sf::View exit_view = window.getDefaultView();
+	window.setView(exit_view);
+
+	std::string score_string = "your score was:\n " + to_str(score);
+
+	WindowText game_result(40);
+
 	
 	while (window.isOpen()) {
 
@@ -82,13 +96,19 @@ void ShowMenu(sf::RenderWindow& window) {
 		}
 
 		window.clear();
-
 		background.draw(window);
 
 		//displaying buttons
-		ButtonStart.draw(window);
+		if(EntryMenu)
+			ButtonStart.draw(window);
+
 		Highscore.draw(window);
 		Exit.draw(window);
+		//Back.draw(window);
+
+		if(!EntryMenu)
+			game_result.Display(window, { 75.f, 200.f }, score_string);
+
 
 		sf::Vector2i MousePos = sf::Mouse::getPosition(window);
 
@@ -100,14 +120,38 @@ void ShowMenu(sf::RenderWindow& window) {
 		}
 		
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-			if (ButtonStart.IsClicked(worldPos)) {
+			if (EntryMenu && ButtonStart.IsClicked(worldPos)) {
 				std::cout << "Good luck buddy" << std::endl;
 				break;
 			}
 
 			if (Highscore.IsClicked(worldPos)) {
-				std::cout << "no highscores yet" << std::endl;
-				ShowHighscores();
+				std::cout << "Highscores" << std::endl;
+				WindowText game_result(40);
+
+				while (1) {
+					MousePos = sf::Mouse::getPosition(window);
+					worldPos = window.mapPixelToCoords(MousePos);
+
+					//needed if we want to leave the game from highscore screen
+					while (window.pollEvent(event))
+					{
+						if (event.type == sf::Event::Closed) {
+							window.close();
+							exit(0);
+						}
+					}
+
+					window.clear();
+					background.draw(window);
+					Back.draw(window);
+					game_result.Display(window, { 75.f, 50.f }, GetHighscores());
+
+					if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && Back.IsClicked(worldPos)) {
+						break;
+					}
+					window.display();
+				}
 			}
 
 			if (Exit.IsClicked(worldPos)) {
@@ -117,51 +161,5 @@ void ShowMenu(sf::RenderWindow& window) {
 		}
 
 		window.display();
-	}
-}
-
-void ShowExitScreen(sf::RenderWindow& window, const int& score) {
-	Background background(window, 2);
-	Button Exit("exit", 400.f);
-
-	//sets initial view that allows to display exit menu correctly
-	sf::View exit_view = window.getDefaultView();
-	window.setView(exit_view);
-
-	std::string score_string = "your score was:\n " + to_str(score);
-
-	WindowText game_result(40);
-
-	while (window.isOpen()) {
-		sf::Event event;
-		while (window.pollEvent(event))
-		{
-			if (event.type == sf::Event::Closed) {
-				window.close();
-				exit(0);
-			}
-		}
-		window.clear();
-
-		background.draw(window);
-
-		game_result.Display(window, { 75.f, 200.f }, score_string);
-
-//		DisplayText(window, { 75.f, 200.f }, 50, score_string);
-
-		Exit.draw(window);
-
-		sf::Vector2i MousePos = sf::Mouse::getPosition(window);
-		// convert it to world coordinates
-		sf::Vector2f worldPos = window.mapPixelToCoords(MousePos);
-
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-			if (Exit.IsClicked(worldPos)) {
-				std::cout << "See you next time" << std::endl;
-				exit(0);
-			}
-		}
-		window.display();
-
 	}
 }
