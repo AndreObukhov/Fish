@@ -9,8 +9,9 @@
 
 #include <iterator>
 
-#include "background.h"
+#include "BackGround.h"
 
+std::string to_str(int a);
 
 const std::string L1_file = "C:/Users/User/MIPT/TheGame/Images/L_1.png";
 const std::string L2_file = "C:/Users/User/MIPT/TheGame/Images/L_2.png";
@@ -79,16 +80,25 @@ public:
 
 	//сюда добавляю передачу фона, чтобы вовремя его продлевать + TextureSize по ссылке - она меняется с продолжением фона
 	void Control(sf::Vector2u& TextureSize, sf::RenderWindow& window, Background& background);
+	
+	void Draw(sf::RenderWindow& window, const float& time);
 
-	void Draw(sf::RenderWindow& window);
 	bool isTouched(const AutomaticFish& autoFish);
-	bool DetectFish(std::vector<AutomaticFish>& autoFish);
-	void Eat(std::vector<AutomaticFish>& autoFish, std::vector<AutomaticFish>::iterator it_del);
+	bool DetectFish(std::vector<AutomaticFish>& autoFish, const float& time);
+	void Eat(std::vector<AutomaticFish>& autoFish, std::vector<AutomaticFish>::iterator it_del, const float& time);
 	void ChangeType();
 	int GetScore();
 
 private:
 	int points_ = 0;
+
+	WindowText add_points_;
+	int delta_pts_ = 0;
+	std::string plus_pts_string;
+
+	float time_fish_eaten_;
+
+	void PointsAnimation(sf::RenderWindow& window, const double& time);
 };
 
 

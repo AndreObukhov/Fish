@@ -115,3 +115,37 @@ void Bubble::Draw(sf::RenderWindow& wind, const float& current_time) {
 	bub.setPosition(coordinates.x, coordinates.y);
 	wind.draw(bub);
 }
+
+
+
+WindowText::WindowText(const unsigned& size) {
+	font.loadFromFile(font_file);
+	win_text.setFont(font);
+	win_text.setCharacterSize(size);
+	//win_text.setPosition(position);
+}
+
+void WindowText::Display(sf::RenderWindow& window, const sf::Vector2f& position, std::string text) {
+	win_text.setPosition(position);
+
+	win_text.setString(text);
+	window.draw(win_text);
+}
+
+/*
+void DisplayText(sf::RenderWindow& window, const sf::Vector2f& position, const unsigned& size, std::string text) {
+	
+	sf::Font font;
+	font.loadFromFile(font_file);
+	sf::Text win_text;
+	win_text.setFont(font);
+	win_text.setCharacterSize(size);
+
+	//sf::Vector2i text_pos;
+	//text_pos.x = window.getSize().x - win_text.getLocalBounds().width * 2 - 50;
+	//text_pos.y = 0;
+	win_text.setPosition(position);
+
+	win_text.setString(text);
+	window.draw(win_text);
+}*/

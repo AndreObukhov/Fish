@@ -1,20 +1,10 @@
 #include "pch.h"
 
 #include "Menu.h"
-#include "BackGround.h"
 
-Button::Button(const std::string& name, const float& y) : button_name(name) {
+Button::Button(const std::string& name, const float& y) : button_name(name), button_text(40) {
 	y_position = y;
 	
-	if (!button_font.loadFromFile(font_file)) {
-		std::cout << "Font" << std::endl;
-	}
-	button_text.setFont(button_font);
-	button_text.setString(button_name);
-
-	button_text.setCharacterSize(40);
-	button_text.setPosition(60.0f, y_position + 22.f);
-
 	if (!button_texture.loadFromFile(button_file)) {
 		std::cout << "button" << std::endl;
 	}
@@ -28,10 +18,13 @@ Button::Button(const std::string& name, const float& y) : button_name(name) {
 
 void Button::draw(sf::RenderWindow& window) {
 	window.draw(button_sprite);
-	window.draw(button_text);
+	
+	sf::Vector2f text_pos(60.f, y_position + 22.f);
+	button_text.Display(window, text_pos, button_name);
+	//DisplayText(window, text_pos, 40, button_name);
 }
 
-bool Button::IsClicked(const sf::Vector2i& MousePos) {
+bool Button::IsClicked(const sf::Vector2f& MousePos) {
 	if ((MousePos.x > Left_Top.x &&
 		MousePos.x < Right_Bottom.x) && 
 		(MousePos.y > Left_Top.y &&
@@ -92,28 +85,32 @@ void ShowMenu(sf::RenderWindow& window) {
 
 		background.draw(window);
 
+		//displaying buttons
 		ButtonStart.draw(window);
 		Highscore.draw(window);
 		Exit.draw(window);
 
 		sf::Vector2i MousePos = sf::Mouse::getPosition(window);
 
+		// convert it to world coordinates *fullscreen now works correctly*
+		sf::Vector2f worldPos = window.mapPixelToCoords(MousePos);
+
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
 			break;
 		}
 		
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-			if (ButtonStart.IsClicked(MousePos)) {
+			if (ButtonStart.IsClicked(worldPos)) {
 				std::cout << "Good luck buddy" << std::endl;
 				break;
 			}
 
-			if (Highscore.IsClicked(MousePos)) {
+			if (Highscore.IsClicked(worldPos)) {
 				std::cout << "no highscores yet" << std::endl;
 				ShowHighscores();
 			}
 
-			if (Exit.IsClicked(MousePos)) {
+			if (Exit.IsClicked(worldPos)) {
 				std::cout << "See you next time" << std::endl;
 				exit(0);
 			}
@@ -127,8 +124,15 @@ void ShowExitScreen(sf::RenderWindow& window, const int& score) {
 	Background background(window, 2);
 	Button Exit("exit", 400.f);
 
-	while (window.isOpen()) {
+	//sets initial view that allows to display exit menu correctly
+	sf::View exit_view = window.getDefaultView();
+	window.setView(exit_view);
 
+	std::string score_string = "your score was:\n " + to_str(score);
+
+	WindowText game_result(40);
+
+	while (window.isOpen()) {
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
@@ -137,16 +141,22 @@ void ShowExitScreen(sf::RenderWindow& window, const int& score) {
 				exit(0);
 			}
 		}
-
 		window.clear();
+
 		background.draw(window);
+
+		game_result.Display(window, { 75.f, 200.f }, score_string);
+
+//		DisplayText(window, { 75.f, 200.f }, 50, score_string);
 
 		Exit.draw(window);
 
 		sf::Vector2i MousePos = sf::Mouse::getPosition(window);
+		// convert it to world coordinates
+		sf::Vector2f worldPos = window.mapPixelToCoords(MousePos);
 
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-			if (Exit.IsClicked(MousePos)) {
+			if (Exit.IsClicked(worldPos)) {
 				std::cout << "See you next time" << std::endl;
 				exit(0);
 			}

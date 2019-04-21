@@ -67,7 +67,8 @@ bool AutomaticFish::Draw(const float &time, sf::RenderWindow& window) {
 	return (pos_.x < 0);
 }
 
-ControlledFish::ControlledFish(const sf::Vector2f& pos, FishType type) : Fish(pos, type) {}
+//additionally setting size of font used to display points added
+ControlledFish::ControlledFish(const sf::Vector2f& pos, FishType type) : Fish(pos, type), add_points_(20) {}
 
 void ControlledFish::Rotate(sf::RenderWindow& window, sf::Vector2f d) {
 	const double Pi = 3.14159f;
@@ -145,12 +146,21 @@ bool ControlledFish::isTouched(const AutomaticFish& autoFish) {
 }
 
 
-void ControlledFish::Eat(std::vector<AutomaticFish>& autoFish, std::vector<AutomaticFish>::iterator it_del) {
-	points_ += type_points[(*it_del).GetType()];
+//additionally getting time for "adding points animation"
+void ControlledFish::Eat(std::vector<AutomaticFish>& autoFish, std::vector<AutomaticFish>::iterator it_del, 
+						const float& time) {
+
+	delta_pts_ = type_points[(*it_del).GetType()];
+
+	points_ += delta_pts_;
+	plus_pts_string = "+ " + to_str(delta_pts_);
+
 	std::cout << "current points = " << points_ << std::endl;
-	//std::cout << autoFish.size();
+
+	time_fish_eaten_ = time;
+	
 	autoFish.erase(it_del);		//seems OK
-	//std::cout << autoFish.size();
+	
 	if (points_ >= type_limit_points[type_])
 		ChangeType();
 }
@@ -169,7 +179,7 @@ void ControlledFish::ChangeType() {
 
 
 //return true if you died
-bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish) {
+bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish, const float& time) {
 	bool imDied = false;
 	auto it = autoFish.begin();
 
@@ -193,7 +203,7 @@ bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish) {
 	}
 
 	if (poedanie) {
-		Eat(autoFish, to_eat);
+		Eat(autoFish, to_eat, time);
 	}
 	/*for (AutomaticFish& fish : autoFish) {
 		if (isTouched(fish)) {
@@ -210,12 +220,25 @@ bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish) {
 	return imDied;
 }
 
-void ControlledFish::Draw(sf::RenderWindow &window) {
+void ControlledFish::Draw(sf::RenderWindow &window, const float& time) {
 	fish_.setTexture(tex_);
 	fish_.setScale(scale_);
 	fish_.setPosition(pos_.x, pos_.y);
 	window.draw(fish_);
+
+	if (time - time_fish_eaten_ < 1.0)
+		PointsAnimation(window, time);
 }
+
+
+void ControlledFish::PointsAnimation(sf::RenderWindow& window, const double& time) {
+	sf::Vector2f delta_pts_pos;
+	delta_pts_pos.x = pos_.x;
+	delta_pts_pos.y = pos_.y - tex_.getSize().y * scale_.y / 2 - 75 * (time - time_fish_eaten_);	//going up effect
+
+	add_points_.Display(window, delta_pts_pos, plus_pts_string);
+}
+
 
 int ControlledFish::GetScore() {
 	return points_;

@@ -190,19 +190,12 @@ int main()
 	ControlledFish fish({ 100, 100 }, FishType::L_1);
 	FishGeneration gen;
 
-
 	//boat
 	FisherBoat boat(100.f, 0.001);
-
-	//text that contains current score
-	sf::Font font;
-	font.loadFromFile(font_file);
-	sf::Text score_text;
-	score_text.setFont(font);
-	score_text.setCharacterSize(20);
 	
-
 	float score;
+
+	WindowText score_text(20);
 
 	while (window.isOpen())
 	{
@@ -213,8 +206,6 @@ int main()
 		{
 			if (event.type == sf::Event::Closed) {
 				score = fish.GetScore();
-				/*std::ofstream output("C:/Users/User/MIPT/TheGame/bin/scores.txt", std::ios::app);
-				output << score << std::endl;*/
 				ManageRecords(score);
 				window.close();
 			}
@@ -236,24 +227,28 @@ int main()
 		background.Bubbles(time.asSeconds(), window);
 
 		//рисуем рыб
-		fish.Draw(window);
+		fish.Draw(window, time.asSeconds());
+
 		gen.GenerateFish(time.asSeconds(), fish.GetPosition());			//сюда передаем фон, чтобы с его обновлением рисовалось корректно
 		gen.Draw(time.asSeconds(), window);
 
-		if (fish.DetectFish(gen.autoFish)) {
+		//adding time into function for score animation
+		if (fish.DetectFish(gen.autoFish, time.asSeconds())) {
 			std::cout << "YOU ARE DEAD!" << std::endl;
-			//ShowExitScreen(window, fish.GetScore());
+			ShowExitScreen(window, fish.GetScore());
 
 			// написать какой-то метод EndGame(), который будет все останавливать
 		}
-
+		
 		//благодаря всему этому, текст привязан к правому верхнему углу
-		score_text.setString(to_str(fish.GetScore()));
 		sf::Vector2i text_pos;
-		text_pos.x = window.getSize().x - score_text.getLocalBounds().width * 2 - 50;
+		text_pos.x = window.getSize().x - 50;
 		text_pos.y = 0;
-		score_text.setPosition(window.mapPixelToCoords(text_pos));
-		window.draw(score_text);
+
+		score_text.Display(window, window.mapPixelToCoords(text_pos), to_str(fish.GetScore()));
+
+
+		//DisplayText(window, window.mapPixelToCoords(text_pos), 20, to_str(fish.GetScore()));
 
 		//boat - легко сделать вектор лодок, атакующих в разное время
 		boat.draw(time.asSeconds(), window);

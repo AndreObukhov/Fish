@@ -7,6 +7,8 @@
 
 const std::string background_game = "C:/Users/User/MIPT/TheGame/Images/panorama.jpg";
 const std::string background_menu = "C:/Users/User/MIPT/TheGame/Images/menu.png";
+const std::string font_file = "C:/Users/User/MIPT/TheGame/varsity_regular.ttf";
+
 
 bool IsInsideWindow(sf::Vector2u WSize, sf::Vector2f Position);
 
@@ -49,3 +51,15 @@ private:
 	std::vector<Bubble> bubbles;
 	double bubble_creation_time = 0;
 };
+
+class WindowText {			//needed to load font from file once, not every time it is drawn
+public:
+	WindowText(const unsigned& size);
+	void Display(sf::RenderWindow& window, const sf::Vector2f& position, std::string text);
+private:
+	sf::Font font;
+	sf::Text win_text;
+	unsigned font_size;
+};
+
+//void DisplayText(sf::RenderWindow& window, const sf::Vector2f& position, const unsigned& size, std::string text);
