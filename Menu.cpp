@@ -16,6 +16,20 @@ Button::Button(const std::string& name, const float& y) : button_name(name), but
 	SetVectors();
 }
 
+Button::Button(const std::string& file_name, const float& x, const float& y) : button_name(""), button_text(40) {
+	y_position = y;
+
+	if (!button_texture.loadFromFile(file_name)) {
+		std::cout << "button" << std::endl;
+	}
+
+	button_sprite.setTexture(button_texture);
+	button_sprite.setPosition(x, y_position);
+	button_sprite.setScale(0.2f, 0.2f);
+
+	SetVectors();
+}
+
 void Button::draw(sf::RenderWindow& window) {
 	window.draw(button_sprite);
 	
@@ -24,15 +38,32 @@ void Button::draw(sf::RenderWindow& window) {
 	//DisplayText(window, text_pos, 40, button_name);
 }
 
+void Button::dynamicDraw(sf::RenderWindow& window, const sf::Vector2f& pos) {
+	button_sprite.setPosition(pos);
+	window.draw(button_sprite);
+	SetVectors();
+}
+
+
 bool Button::IsClicked(const sf::Vector2f& MousePos) {
 	if ((MousePos.x > Left_Top.x &&
 		MousePos.x < Right_Bottom.x) && 
 		(MousePos.y > Left_Top.y &&
-		MousePos.y < Right_Bottom.y - 30.f)) {
+		MousePos.y < Right_Bottom.y - (Right_Bottom.y - Left_Top.y) * 0.2f)) {			//because button textures are not ideal
 		return true;
 	}
 	return false;
 }
+/*
+void Button::ResetTexture(const std::string& new_file) {
+	if (!button_texture.loadFromFile(new_file)) {
+		std::cout << "button" << std::endl;
+	}
+
+	button_sprite.setTexture(button_texture);
+	SetVectors();
+}
+*/
 
 void Button::SetVectors() {
 	Left_Top.x = button_sprite.getPosition().x;

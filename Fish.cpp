@@ -28,7 +28,11 @@ void Fish::LoadSprite() {
 		if (!tex_.loadFromFile(L4_file))
 			exit(-1);
 		break;
-
+			//for boosting shrimp
+	case FishType::SHRIMP:
+		if (!tex_.loadFromFile(shrimp_file))
+			exit(-1);
+		break;
 	}
 }
 
@@ -189,6 +193,11 @@ bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish, const floa
 
 	while (it != autoFish.end()) {
 		if (isTouched(*it)) {
+			/*if ((*it).GetType() == FishType::SHRIMP) {
+				to_eat = it;
+				poedanie = true;
+				break;
+			}*/
 			if (type_ >= (*it).GetType()) {
 				to_eat = it;
 				poedanie = true;
@@ -261,10 +270,14 @@ FishType FishGeneration::GenerateType() {
 		type = FishType::L_3;
 	if (genType >= 90 && genType < 100)
 		type = FishType::L_4;
+
+	if (genType > 100)
+		type = FishType::SHRIMP;
+	
 	return type;
 }
 
-
+/*
 void FishGeneration::Draw(const float &time, sf::RenderWindow& window) {
 
 	for (int i = 0; i < autoFish.size(); ++i) {
@@ -273,6 +286,8 @@ void FishGeneration::Draw(const float &time, sf::RenderWindow& window) {
 		}
 	}
 }
+*/
+
 
 //сюда теперь передаем самого перса, чтобы на расстоянии от него генерились рыбы
 //а не на конце окна(иначе беда)
@@ -280,8 +295,11 @@ void FishGeneration::GenerateFish(const float &time, const sf::Vector2f& current
 	if (time > fish_creation_time) {
 		float x = current_fish.x + 600.f + rand() % 400;
 		float y = 100 + rand() % 400;			//?????
-		FishType type = GenerateType();
-		autoFish.push_back(AutomaticFish({ x, y }, type, time));
+
+		FishType type = GenerateType();	
+		
+		autoCreature.push_back(AutomaticFish({ x, y }, type, time));
+
 		float dt = rand() % 3;
 		fish_creation_time += dt;
 

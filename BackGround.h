@@ -32,7 +32,7 @@ public:
 
 	void AddBackground();
 
-	void Bubbles(const float& time, sf::RenderWindow& window);
+	void Bubbles(const float& x_offset, const float& time, sf::RenderWindow& window);
 
 	void draw(sf::RenderWindow& window);
 

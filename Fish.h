@@ -18,13 +18,16 @@ const std::string L2_file = "C:/Users/User/MIPT/TheGame/Images/L_2.png";
 const std::string L3_file = "C:/Users/User/MIPT/TheGame/Images/L_3.png";
 const std::string L4_file = "C:/Users/User/MIPT/TheGame/Images/L_4.png";
 
+const std::string shrimp_file = "C:/Users/User/MIPT/TheGame/Images/Shrimp.png";
+
 
 enum class FishType {
-	L_1 = 1, L_2 = 2, L_3 = 3, L_4 = 4
+	L_1 = 1, L_2 = 2, L_3 = 3, L_4 = 4, SHRIMP = 5
 };
 
 static std::map<FishType, sf::Vector2f> type_scale = { {FishType::L_1, {0.1f, 0.1f}}, {FishType::L_2, {0.2f, 0.2f}},
-											  {FishType::L_3, {0.3f, 0.3f}}, {FishType::L_4, {0.4f, 0.4f}} };
+											  {FishType::L_3, {0.3f, 0.3f}}, {FishType::L_4, {0.4f, 0.4f}}, 
+											  {FishType::SHRIMP, {0.1f, 0.1f}} };
 
 static std::map<FishType, int> type_points = { {FishType::L_1, 1}, {FishType::L_2, 5},
 													 {FishType::L_3, 10}, {FishType::L_4, 15} };
@@ -103,13 +106,28 @@ private:
 };
 
 
-class FishGeneration {
+template<class F>
+class Generator {
+public:
+	Generator() {};
+	void Draw(const float& time, sf::RenderWindow& window) {
+		for (int i = 0; i < autoCreature.size(); ++i) {
+			if (autoCreature[i].Draw(time, window)) {
+				autoCreature.erase(autoCreature.begin() + i);
+			}
+		}
+	}
+	std::vector<F> autoCreature;
+};
+
+
+class FishGeneration : public Generator<AutomaticFish> {
 public:
 	FishGeneration();
 	FishType GenerateType();
 	void GenerateFish(const float &time, const sf::Vector2f& current_fish);
-	void Draw(const float &time, sf::RenderWindow& window);
-	std::vector<AutomaticFish> autoFish;
+	//void Draw(const float &time, sf::RenderWindow& window);
+	//std::vector<AutomaticFish> autoFish;
 
 private:
 	float fish_creation_time = 0;

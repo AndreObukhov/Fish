@@ -46,22 +46,22 @@ void Background::AddBackground() {
 
 
 
-void Background::Bubbles(const float& time, sf::RenderWindow& window) {
+void Background::Bubbles(const float& x_offset, const float& time, sf::RenderWindow& window) {
 	//initializing bubbles vector
-	float make_x = 200.f + rand() % 201;
-	sf::Vector2f pos(make_x, 500.0);
+	float make_x = x_offset + 1000.f + rand() % 201;			//remade to draw bubbles ahead of the fish
+	sf::Vector2f pos(make_x, 500.f);
 
-	//making bubbles at random interval
+	//making bubbles at random interval 1-2 sec
 	if (time > bubble_creation_time) {
 		bubbles.push_back(Bubble(pos, time));
-		float dt = 1.5f + 0.1f * (float)(rand() % 11);
+		float dt = 1.f + 0.1f * (float)(rand() % 11);
 		bubble_creation_time += dt;
 	}
 
 	//drawing bubbles and erasing unneeded ones
 	for (int i = 0; i < bubbles.size(); i++) {
 		bubbles[i].Draw(window, time);
-		if (!IsInsideWindow(window.getSize(), bubbles[i].GetPos(time))) {
+		if (bubbles[i].GetPos(time).y < 0) {			//now delete only if higher than top of the window 
 			bubbles.erase(bubbles.begin() + i);
 		}
 	}
@@ -93,7 +93,8 @@ sf::Vector2u Background::GetBackgroundTextureSize() const {
 Bubble::Bubble(const sf::Vector2f& pos, const float& t) {
 	coordinates = pos;
 	time_created = t;
-	speed.y = (float)-0.05;
+	speed.y = -0.05f - 0.01f * (rand() % 10);			//now random as well
+	//std::cout << speed.y << std::endl;
 	//speed.x = 0.1* (-10 + rand() % 20);
 }
 
@@ -101,7 +102,7 @@ sf::Vector2f Bubble::GetPos(const float& current_time) {
 	float dt = current_time - time_created;
 
 	//making bubbles go like sin(t)
-	speed.x = sin(5 * current_time) / (5 + 10 * dt);
+	speed.x = sin(5 * current_time) / (5 + 5 * dt);
 
 	coordinates = coordinates + speed;
 	return coordinates;

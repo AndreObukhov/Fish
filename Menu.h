@@ -20,8 +20,11 @@ std::string to_str(int a);
 class Button {
 public:
 	Button(const std::string& name, const float& y);		//название кнопки и где она по высоте
+	Button(const std::string& file_name, const float& x, const float& y);		//constructor for simple buttons without text
 	void draw(sf::RenderWindow& window);					//отрисовка кнопки в окне
+	void dynamicDraw(sf::RenderWindow& window, const sf::Vector2f& pos);
 	bool IsClicked(const sf::Vector2f& MousePos);
+	//void ResetTexture(const std::string& new_file);
 
 private:
 	void SetVectors();		//задает векторы, содержащие ориентацию кнопки на экране

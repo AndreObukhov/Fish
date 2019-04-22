@@ -4,6 +4,7 @@
 #include "Menu.h"
 #include "BackGround.h"
 #include "Fish.h"
+#include "Boost.h"
 
 #include <iostream>
 #include <vector>
@@ -15,6 +16,7 @@
 
 
 const std::string hook_image = "C:/Users/User/MIPT/TheGame/Images/hook.png";
+const std::string close_button_image = "C:/Users/User/MIPT/TheGame/Images/close-button.png";
 
 //used to convert current score into string to show it in top corner.
 std::string to_str(int a) {
@@ -91,15 +93,15 @@ public:
 			std::cout << "boat" << std::endl;
 			exit(-1);
 		}
-		//boat_.setTexture(tex);
+		
+		boat_.setTexture(tex);
+		boat_.setScale(0.2f, 0.2f);
 	}
 
 	void draw(const float& t, sf::RenderWindow& wind) {
 		x_coordinate += speed * t;
 
-		boat_.setTexture(tex);
-		boat_.setScale(0.2f, 0.2f);
-		boat_.setPosition(x_coordinate, -100.f);
+		boat_.setPosition(x_coordinate, -120.f);
 
 		wind.draw(boat_);
 	}
@@ -191,12 +193,19 @@ int main()
 	ControlledFish fish({ 100, 100 }, FishType::L_1);
 	FishGeneration gen;
 
+	//BoostGeneration boost;
+
 	//boat
 	FisherBoat boat(100.f, 0.001);
 	
 	float score;
 
 	WindowText score_text(20);
+	//added to end the game without death
+	Button CloseButton(close_button_image, 20.f, 20.f);
+
+	Shrimp shrimp({ 220.f, 200.f }, 0);
+
 
 	while (window.isOpen())
 	{
@@ -225,7 +234,7 @@ int main()
 		window.setView(view_);						//!!!Dont forget or view is useless
 
 		background.draw(window);
-		background.Bubbles(time.asSeconds(), window);
+		background.Bubbles(fish.GetPosition().x, time.asSeconds(), window);
 
 		//рисуем рыб
 		fish.Draw(window, time.asSeconds());
@@ -234,20 +243,29 @@ int main()
 		gen.Draw(time.asSeconds(), window);
 
 		//adding time into function for score animation
-		if (fish.DetectFish(gen.autoFish, time.asSeconds())) {
+		if (fish.DetectFish(gen.autoCreature, time.asSeconds())) {
 			std::cout << "YOU ARE DEAD!" << std::endl;
 			ShowMenu(window, false, fish.GetScore());
 
 			// написать какой-то метод EndGame(), который будет все останавливать
 		}
 		
-		//благодаря всему этому, текст привязан к правому верхнему углу
-		sf::Vector2i text_pos;
-		text_pos.x = window.getSize().x - 50;
-		text_pos.y = 0;
+		shrimp.Draw(time.asSeconds(), window);
 
-		score_text.Display(window, window.mapPixelToCoords(text_pos), to_str(fish.GetScore()));
+		//благодаря этому текст привязан к правому верхнему углу
+		score_text.Display(window, window.mapPixelToCoords({ (int)window.getSize().x - 300, 10 }), 
+							"score: " + to_str(fish.GetScore()));
 
+		//close button
+		CloseButton.dynamicDraw(window, window.mapPixelToCoords({ 20, 20 }));
+
+		sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
+		sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
+
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && CloseButton.IsClicked(worldPos)) {
+			ShowMenu(window, false, fish.GetScore());
+		}
+		
 
 		//DisplayText(window, window.mapPixelToCoords(text_pos), 20, to_str(fish.GetScore()));
 
