@@ -193,7 +193,7 @@ int main()
 	ControlledFish fish({ 100, 100 }, FishType::L_1);
 	FishGeneration gen;
 
-	//BoostGeneration boost;
+	BoostGeneration boost;			//drawing creatures
 
 	//boat
 	FisherBoat boat(100.f, 0.001);
@@ -204,7 +204,7 @@ int main()
 	//added to end the game without death
 	Button CloseButton(close_button_image, 20.f, 20.f);
 
-	Shrimp shrimp({ 220.f, 200.f }, 0);
+	Shrimp shrimp({ 220.f, 200.f }, 0);			//testing how it works
 
 
 	while (window.isOpen())
@@ -241,6 +241,11 @@ int main()
 
 		gen.GenerateFish(time.asSeconds(), fish.GetPosition());			//сюда передаем фон, чтобы с его обновлением рисовалось корректно
 		gen.Draw(time.asSeconds(), window);
+
+
+		boost.Generate(time.asSeconds(), fish);		//applying boost to the fish is inside of this function
+		boost.Draw(time.asSeconds(), window);
+		
 
 		//adding time into function for score animation
 		if (fish.DetectFish(gen.autoCreature, time.asSeconds())) {

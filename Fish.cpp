@@ -29,7 +29,7 @@ void Fish::LoadSprite() {
 			exit(-1);
 		break;
 			//for boosting shrimp
-	case FishType::SHRIMP:
+	case FishType::SHRIMP: 
 		if (!tex_.loadFromFile(shrimp_file))
 			exit(-1);
 		break;
@@ -102,9 +102,6 @@ void ControlledFish::Move(sf::Vector2u& TextureSize, Background& background) {
 			TextureSize = background.GetBackgroundTextureSize();		//добавляет очередной кусок фона
 		}
 
-		/*if (!IsInsideWindow(TextureSize, fish_.getPosition())) {
-			pos_.x -= speed_;
-		}*/
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
 		pos_.x -= speed_;
@@ -145,14 +142,10 @@ void ControlledFish::Control(sf::Vector2u& textureSize, sf::RenderWindow& window
 	Laser(window, center, worldPos);
 }
 
-bool ControlledFish::isTouched(const AutomaticFish& autoFish) {
-	return fish_.getGlobalBounds().intersects(autoFish.GetSprite().getGlobalBounds());
-}
-
 
 //additionally getting time for "adding points animation"
-void ControlledFish::Eat(std::vector<AutomaticFish>& autoFish, std::vector<AutomaticFish>::iterator it_del, 
-						const float& time) {
+void ControlledFish::Eat(std::vector<AutomaticFish>& autoFish, 
+					std::vector<AutomaticFish>::iterator it_del, const float& time) {
 
 	delta_pts_ = type_points[(*it_del).GetType()];
 
@@ -183,7 +176,11 @@ void ControlledFish::ChangeType() {
 
 
 //return true if you died
+//template<typename T>
 bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish, const float& time) {
+	//it is here for now, need to find another place (probably)
+	CheckBoost(time);
+
 	bool imDied = false;
 	auto it = autoFish.begin();
 
@@ -288,11 +285,11 @@ void FishGeneration::Draw(const float &time, sf::RenderWindow& window) {
 }
 */
 
-
 //сюда теперь передаем самого перса, чтобы на расстоянии от него генерились рыбы
 //а не на конце окна(иначе беда)
+
 void FishGeneration::GenerateFish(const float &time, const sf::Vector2f& current_fish) {
-	if (time > fish_creation_time) {
+	if (time > last_creation_time) {
 		float x = current_fish.x + 600.f + rand() % 400;
 		float y = 100 + rand() % 400;			//?????
 
@@ -301,7 +298,6 @@ void FishGeneration::GenerateFish(const float &time, const sf::Vector2f& current
 		autoCreature.push_back(AutomaticFish({ x, y }, type, time));
 
 		float dt = rand() % 3;
-		fish_creation_time += dt;
-
+		last_creation_time += dt;
 	}
 }

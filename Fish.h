@@ -43,7 +43,6 @@ static std::map<FishType, sf::Vector2f> type_speed = { {FishType::L_1, {0.04, 0}
 
 class Fish {
 public:
-
 	Fish(const sf::Vector2f& pos, FishType type);
 
 	void LoadSprite();
@@ -68,7 +67,6 @@ public:
 private:
 	float time_created_;
 	sf::Vector2f  speed_;
-
 };
 
 
@@ -87,14 +85,37 @@ public:
 	//!!! -- added time to Eat, Draw, Detect to make "plus points" animation
 	void Draw(sf::RenderWindow& window, const float& time);
 
-	bool isTouched(const AutomaticFish& autoFish);
+	template<typename T>
+	bool isTouched(const T& Creature) {
+		return fish_.getGlobalBounds().intersects(Creature.GetSprite().getGlobalBounds());
+	}
+
 	bool DetectFish(std::vector<AutomaticFish>& autoFish, const float& time);
 	void Eat(std::vector<AutomaticFish>& autoFish, std::vector<AutomaticFish>::iterator it_del, const float& time);
 	void ChangeType();
 	int GetScore();
 
+	void SpeedBoost(const float& time, const float& factor) {
+		speed_ = speed_ * factor;
+		time_boost_applied = time;
+		is_boost_applied = true;
+		boost_factor = factor;
+	}
+
+	void CheckBoost(const float& time) {
+		if ((time - time_boost_applied > 0.5) && is_boost_applied) {
+			time_boost_applied = 0;
+			is_boost_applied = false;
+			speed_ = speed_ / boost_factor;
+		}
+	}
+
 private:
 	int points_ = 0;
+
+	bool is_boost_applied = false;
+	float time_boost_applied;
+	float boost_factor;
 
 	WindowText add_points_;
 	int delta_pts_ = 0;
@@ -106,10 +127,11 @@ private:
 };
 
 
-template<class F>
+template<class T>
 class Generator {
 public:
-	Generator() {};
+	Generator() {}
+
 	void Draw(const float& time, sf::RenderWindow& window) {
 		for (int i = 0; i < autoCreature.size(); ++i) {
 			if (autoCreature[i].Draw(time, window)) {
@@ -117,7 +139,8 @@ public:
 			}
 		}
 	}
-	std::vector<F> autoCreature;
+
+	std::vector<T> autoCreature;
 };
 
 
@@ -128,7 +151,6 @@ public:
 	void GenerateFish(const float &time, const sf::Vector2f& current_fish);
 	//void Draw(const float &time, sf::RenderWindow& window);
 	//std::vector<AutomaticFish> autoFish;
-
 private:
-	float fish_creation_time = 0;
+	float last_creation_time = 0;
 };
