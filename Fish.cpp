@@ -33,6 +33,10 @@ void Fish::LoadSprite() {
 		if (!tex_.loadFromFile(shrimp_file))
 			exit(-1);
 		break;
+	case FishType::OYSTER:
+		if (!tex_.loadFromFile(oyster_file))
+			exit(-1);
+		break;
 	}
 }
 
@@ -51,7 +55,8 @@ FishType Fish::GetType() const {
 	return type_;
 }
 
-AutomaticFish::AutomaticFish(const sf::Vector2f& pos, FishType type, const float& time) : Fish(pos, type), time_created_(time) {
+AutomaticFish::AutomaticFish(const sf::Vector2f& pos, FishType type, const float& time) : 
+	Fish(pos, type), time_created_(time) {
 	speed_ = type_speed[type];
 }
 

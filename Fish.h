@@ -19,15 +19,16 @@ const std::string L3_file = "C:/Users/User/MIPT/TheGame/Images/L_3.png";
 const std::string L4_file = "C:/Users/User/MIPT/TheGame/Images/L_4.png";
 
 const std::string shrimp_file = "C:/Users/User/MIPT/TheGame/Images/Shrimp.png";
+const std::string oyster_file = "C:/Users/User/MIPT/TheGame/Images/Oyster.png";
 
 
 enum class FishType {
-	L_1 = 1, L_2 = 2, L_3 = 3, L_4 = 4, SHRIMP = 5
+	L_1 = 1, L_2 = 2, L_3 = 3, L_4 = 4, SHRIMP = 5, OYSTER = 6
 };
 
 static std::map<FishType, sf::Vector2f> type_scale = { {FishType::L_1, {0.1f, 0.1f}}, {FishType::L_2, {0.2f, 0.2f}},
 											  {FishType::L_3, {0.3f, 0.3f}}, {FishType::L_4, {0.4f, 0.4f}}, 
-											  {FishType::SHRIMP, {0.1f, 0.1f}} };
+											  {FishType::SHRIMP, {0.1f, 0.1f}}, {FishType::OYSTER, {0.05f, 0.05f}} };
 
 static std::map<FishType, int> type_points = { {FishType::L_1, 1}, {FishType::L_2, 5},
 													 {FishType::L_3, 10}, {FishType::L_4, 15} };
@@ -95,6 +96,7 @@ public:
 	void ChangeType();
 	int GetScore();
 
+
 	void SpeedBoost(const float& time, const float& factor) {
 		speed_ = speed_ * factor;
 		time_boost_applied = time;
@@ -112,7 +114,7 @@ public:
 
 private:
 	int points_ = 0;
-
+	//make struct Boost where all of this is stored
 	bool is_boost_applied = false;
 	float time_boost_applied;
 	float boost_factor;
@@ -139,7 +141,7 @@ public:
 			}
 		}
 	}
-
+	
 	std::vector<T> autoCreature;
 };
 

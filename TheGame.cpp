@@ -5,6 +5,7 @@
 #include "BackGround.h"
 #include "Fish.h"
 #include "Boost.h"
+#include "Network.h"
 
 #include <iostream>
 #include <vector>
@@ -169,8 +170,24 @@ private:
 };
 
 
+bool ChoosePlayMode(Network& net) {
+	std::cout << "How many players? (1/2)" << std::endl;
+	int players_count = 0;
+	std::cin >> players_count;
+	if (players_count == 1)
+		return 0;
+	if (players_count == 2) {
+		net.CreateConnection();
+		return 1;
+	}
+}
+
+
 int main()
 {
+	//Network net;
+	//ChoosePlayMode(net);
+
 	sf::RenderWindow window(sf::VideoMode(1500, 900), "Best game ever!");
 
 	ShowMenu(window, true, 0);		//go to menu.cpp
@@ -191,6 +208,9 @@ int main()
 																					//за текстуру фона
 	
 	ControlledFish fish({ 100, 100 }, FishType::L_1);
+
+	ControlledFish anotherFish({ 100, 100 }, FishType::L_1);
+
 	FishGeneration gen;
 
 	BoostGeneration boost;			//drawing creatures
@@ -204,8 +224,7 @@ int main()
 	//added to end the game without death
 	Button CloseButton(close_button_image, 20.f, 20.f);
 
-	Shrimp shrimp({ 220.f, 200.f }, 0);			//testing how it works
-
+	//Shrimp shrimp({ 220.f, 200.f }, 0);			//testing how it works
 
 	while (window.isOpen())
 	{
@@ -223,6 +242,7 @@ int main()
 
 		window.clear();
 
+
 		sf::Vector2f view_Center;
 
 		//making camera follow our sprite
@@ -238,6 +258,9 @@ int main()
 
 		//рисуем рыб
 		fish.Draw(window, time.asSeconds());
+
+		//net.SendMyFish(fish);
+		//net.GetAnotherFish(anotherFish);
 
 		gen.GenerateFish(time.asSeconds(), fish.GetPosition());			//сюда передаем фон, чтобы с его обновлением рисовалось корректно
 		gen.Draw(time.asSeconds(), window);
@@ -255,7 +278,7 @@ int main()
 			// написать какой-то метод EndGame(), который будет все останавливать
 		}
 		
-		shrimp.Draw(time.asSeconds(), window);
+		//shrimp.Draw(time.asSeconds(), window);
 
 		//благодаря этому текст привязан к правому верхнему углу
 		score_text.Display(window, window.mapPixelToCoords({ (int)window.getSize().x - 300, 10 }), 
