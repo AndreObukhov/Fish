@@ -29,26 +29,38 @@ void Oyster::Apply(ControlledFish& fish, const float& time) {
 }
 
 
+Coin::Coin(const sf::Vector2f& pos, const float& time) : Booster(pos, time, FishType::COIN) {}
+
+void Coin::Apply(ControlledFish& fish, const float& time) {
+	fish.CoinBoost(points_, time);
+}
+
 
 void BoostGeneration::Generate(const float& time, ControlledFish& fish) {
-	sf::Vector2f current_fish = fish.GetPosition();
 	if (time > last_creation_time) {
+
+		sf::Vector2f current_fish = fish.GetPosition();
+
 		sf::Vector2f p;
 		p.x = current_fish.x + 600.f + rand() % 400;
 		p.y = 100.f + rand() % 400;
 
-		//std::shared_ptr<Booster> b;
-		//b = std::make_shared<Shrimp>({ x, y }, time);
+		FishType T = GenerateBoost();
 		
-		//for test purposes
-		boosts_.push_back(std::make_shared<Shrimp>(p, time));
-		p.x += 200.f;
-		p.y += 100.f;
-		boosts_.push_back(std::make_shared<Oyster>(p, time));
+		if (T == FishType::SHRIMP) {
+			boosts_.push_back(std::make_shared<Shrimp>(p, time));
+		}
 
-		std::cout << boosts_.size() << std::endl;
+		if (T == FishType::OYSTER) {
+			boosts_.push_back(std::make_shared<Oyster>(p, time));
+		}
+		
+		if (T == FishType::COIN) {
+			boosts_.push_back(std::make_shared<Coin>(p, time));
+			//std::cout << "coin" << std::endl;
+		}
 
-		last_creation_time += 3.f;
+		last_creation_time += 5.f;
 	}
 	IsEaten(fish, time);
 }
@@ -89,4 +101,16 @@ void BoostGeneration::IsEaten(ControlledFish& fish, const float& time) {
 			boosts_.erase(it);
 		}
 	}
+}
+
+FishType GenerateBoost() {
+	int BoostType = rand() % 101;
+
+	if (BoostType < 50) {
+		return FishType::SHRIMP;
+	}
+	if (BoostType >= 50 && BoostType < 90) {
+		return FishType::OYSTER;
+	}
+	return FishType::COIN;
 }

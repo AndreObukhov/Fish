@@ -7,6 +7,7 @@
 #include <string>
 
 #include "BackGround.h"
+#include "Network.h"
 
 #include "SFML/Graphics.hpp"
 
@@ -42,4 +43,7 @@ private:
 	float y_position;				//где по высоте в столбике кнопок (разность лучше делать около 100)
 };
 
-void ShowMenu(sf::RenderWindow& window, bool EntryMenu, const int& score);
+bool ShowMenu(sf::RenderWindow& window, Network& net, bool EntryMenu, const int& score);
+//returns true if another restart cycle
+
+//void ShowNetworkMenu(Network& net, sf::RenderWindow& window);

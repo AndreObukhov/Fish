@@ -170,7 +170,7 @@ private:
 };
 
 
-bool ChoosePlayMode(Network& net) {
+/*bool ChoosePlayMode(Network& net) {
 	std::cout << "How many players? (1/2)" << std::endl;
 	int players_count = 0;
 	std::cin >> players_count;
@@ -180,21 +180,31 @@ bool ChoosePlayMode(Network& net) {
 		net.CreateConnection();
 		return 1;
 	}
+}*/
+
+void DrawEverything(Background& background, ControlledFish& fish, FishGeneration& gen, 
+					BoostGeneration& boost, sf::RenderWindow& window, const float& time) {
+	background.draw(window);
+	background.Bubbles(fish.GetPosition().x, time, window);
+
+	//рисуем рыб
+	fish.Draw(window, time);
+
+	boost.Generate(time, fish);		//applying boost to the fish is inside of this function
+	boost.Draw(time, window);
+
+
+	gen.GenerateFish(time, fish.GetPosition());			//сюда передаем фон, чтобы с его обновлением рисовалось корректно
+	gen.Draw(time, window);
 }
 
-
-int main()
-{
-	//Network net;
-	//ChoosePlayMode(net);
-
-	sf::RenderWindow window(sf::VideoMode(1500, 900), "Best game ever!");
-
-	ShowMenu(window, true, 0);		//go to menu.cpp
-									//true means that menu for game beginning is displayed
+bool GameStart(sf::RenderWindow& window, Network& net) {
+	//now choosing number of players (1/2) is inside of menu
+	ShowMenu(window, net, true, 0);		//go to menu.cpp
+										//true means that menu for game beginning is displayed
 
 	sf::Clock clock;
-	Background background(window, 1);
+	Background background(window, 1);			//parameter one is for in-game background image
 
 	sf::Vector2u TextureSize = background.GetBackgroundTextureSize();
 
@@ -206,25 +216,27 @@ int main()
 
 	const float YRatio = (TextureSize.y - view_.getSize().y) / (TextureSize.y);		//магия для того, чтобы не вылетать
 																					//за текстуру фона
-	
-	ControlledFish fish({ 100, 100 }, FishType::L_1);
+
+	ControlledFish fish({ 100, 100 }, FishType::L_1);		//starting from this
 
 	ControlledFish anotherFish({ 100, 100 }, FishType::L_1);
 
-	FishGeneration gen;
-
-	BoostGeneration boost;			//drawing creatures
+	FishGeneration gen;				//fishes to eat
+	BoostGeneration boost;			//creatures that give you boosts
 
 	//boat
 	FisherBoat boat(100.f, 0.001);
-	
-	float score;
+
+	float score = 0;
 
 	WindowText score_text(20);
-	//added to end the game without death
+
+	//special button added to end the game without death
 	Button CloseButton(close_button_image, 20.f, 20.f);
 
 	//Shrimp shrimp({ 220.f, 200.f }, 0);			//testing how it works
+
+	int i = 0;			//for limiting number of send/receive during connection
 
 	while (window.isOpen())
 	{
@@ -249,73 +261,82 @@ int main()
 		view_Center.x = fish.GetSprite().getPosition().x + view_.getSize().x / 3.f;
 		view_Center.y = (TextureSize.y / 2.f) + ((fish.GetSprite().getPosition().y - TextureSize.y / 2) * YRatio);
 
-		
-		view_.setCenter(view_Center);				
+		view_.setCenter(view_Center);
 		window.setView(view_);						//!!!Dont forget or view is useless
 
-		background.draw(window);
-		background.Bubbles(fish.GetPosition().x, time.asSeconds(), window);
 
-		//рисуем рыб
-		fish.Draw(window, time.asSeconds());
+		if (i == 50) {			//test
+			//вынести в отдельный поток...
+			//----------network----------
+			net.SendMyFish(fish);
+			net.GetAnotherFish(anotherFish);
+			//---------------------------
+			i = 0;
+		}
+		i++;
 
-		//net.SendMyFish(fish);
-		//net.GetAnotherFish(anotherFish);
 
-		gen.GenerateFish(time.asSeconds(), fish.GetPosition());			//сюда передаем фон, чтобы с его обновлением рисовалось корректно
-		gen.Draw(time.asSeconds(), window);
+		//here we also can draw another fish in 2-player-mode
+		DrawEverything(background, fish, gen, boost, window, time.asSeconds());
 
-
-		boost.Generate(time.asSeconds(), fish);		//applying boost to the fish is inside of this function
-		boost.Draw(time.asSeconds(), window);
-		
+		//сюда добавляю передачу фона, чтобы вовремя его продлевать
+		fish.Control(TextureSize, window, background);
 
 		//adding time into function for score animation
 		if (fish.DetectFish(gen.autoCreature, time.asSeconds())) {
 			std::cout << "YOU ARE DEAD!" << std::endl;
-			ShowMenu(window, false, fish.GetScore());
-
-			// написать какой-то метод EndGame(), который будет все останавливать
+			return ShowMenu(window, net, false, fish.GetScore());			//returns true if restart
 		}
-		
-		//shrimp.Draw(time.asSeconds(), window);
 
-		//благодаря этому текст привязан к правому верхнему углу
-		score_text.Display(window, window.mapPixelToCoords({ (int)window.getSize().x - 300, 10 }), 
-							"score: " + to_str(fish.GetScore()));
+		//drawing score text in right top corner
+		score_text.Display(window, window.mapPixelToCoords({ (int)window.getSize().x - 300, 10 }),
+			"score: " + to_str(fish.GetScore()));
 
-		//close button
+		//close button in left top corner
 		CloseButton.dynamicDraw(window, window.mapPixelToCoords({ 20, 20 }));
 
+		//interaction with close button
 		sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
 		sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
 
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && CloseButton.IsClicked(worldPos)) {
-			ShowMenu(window, false, fish.GetScore());
-		}
-		
 
-		//DisplayText(window, window.mapPixelToCoords(text_pos), 20, to_str(fish.GetScore()));
+		//returns true if restart
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && CloseButton.IsClicked(worldPos)) {
+			return ShowMenu(window, net, false, fish.GetScore());
+		}
+
+		//=========think about how to integrate it=========\\
 
 		//boat - легко сделать вектор лодок, атакующих в разное время
 		boat.draw(time.asSeconds(), window);
-
 
 		sf::Vector2f hook_pos;
 		if (boat.IsAttacking()) {
 			hook_pos = boat.Attack(window);
 			if (IsOnTheHook(fish.GetSprite(), hook_pos)) {
 				std::cout << "You fucked up" << std::endl;
+				ShowMenu(window, net, false, fish.GetScore());
 			}
 		}
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
 			boat.InitAttack();
 		}
-		//сюда добавляю передачу фона, чтобы вовремя его продлевать
-		fish.Control(TextureSize, window, background);
 
 		window.display();
+	}
+
+}
+
+int main() {
+	//network
+	Network net;
+	//ChoosePlayMode(net);
+
+	sf::RenderWindow window(sf::VideoMode(1500, 900), "Best game ever!");
+
+	while (GameStart(window, net)) {
+		//game is running and restarting if button inside the menu is clicked
 	}
 
 	return 0;

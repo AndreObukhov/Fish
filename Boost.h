@@ -30,6 +30,14 @@ private:
 	float boost_;
 };
 
+class Coin : public Booster {
+public:
+	Coin(const sf::Vector2f& pos, const float& time);
+	void Apply(ControlledFish& fish, const float& time) override;
+
+private:
+	int points_ = 10;
+};
 
 class BoostGeneration {
 public:
@@ -45,3 +53,5 @@ public:
 private:
 	float last_creation_time = 0;
 };
+
+FishType GenerateBoost();

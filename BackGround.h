@@ -52,6 +52,7 @@ private:
 	double bubble_creation_time = 0;
 };
 
+
 class WindowText {			//needed to load font from file once, not every time it is drawn
 public:
 	WindowText(const unsigned& size);
@@ -60,6 +61,25 @@ private:
 	sf::Font font;
 	sf::Text win_text;
 	unsigned font_size;
+};
+
+
+class StatusBar {
+public:
+	StatusBar(const sf::Vector2f& pos) {
+		bar.setPosition(pos);
+		bar.setFillColor(sf::Color::Green);
+		progress = 0;
+	}
+
+	void Draw(sf::RenderWindow& window, const float& progress) {
+		bar.setSize(sf::Vector2f(progress, 50.f));
+		window.draw(bar);
+	}
+
+private:
+	float progress;		//progress is from 0 to 1 - ratio until next fish level
+	sf::RectangleShape bar;
 };
 
 //void DisplayText(sf::RenderWindow& window, const sf::Vector2f& position, const unsigned& size, std::string text);

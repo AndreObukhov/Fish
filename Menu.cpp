@@ -96,13 +96,13 @@ std::string GetHighscores() {
 }
 
 
-void ShowMenu(sf::RenderWindow& window, bool EntryMenu, const int& score) {
-	Button ButtonStart("start new game", 200.f);
+bool ShowMenu(sf::RenderWindow& window, Network& net, bool EntryMenu, const int& score) {
+	Button ButtonOnePlayer("one player", 100.f);
+	Button ButtonTwoPlayers("two players", 200.f);
 	Button Highscore("show highscore", 300.f);
-	Button Exit("exit", 400.f);
+	Button Restart("restart", 400.f);
+	Button Exit("exit", 500.f);
 	Button Back("back", 700.f);
-
-	//сюда же добавить выбор одно/многопользовательского режима
 
 	Background background(window, 2);
 	
@@ -114,9 +114,9 @@ void ShowMenu(sf::RenderWindow& window, bool EntryMenu, const int& score) {
 
 	WindowText game_result(40);
 
+	sf::Clock clock;
 	
 	while (window.isOpen()) {
-
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
@@ -128,17 +128,22 @@ void ShowMenu(sf::RenderWindow& window, bool EntryMenu, const int& score) {
 
 		window.clear();
 		background.draw(window);
+		background.Bubbles(-500.f, clock.getElapsedTime().asSeconds(), window);
 
 		//displaying buttons
-		if(EntryMenu)
-			ButtonStart.draw(window);
+		if (EntryMenu) {
+			ButtonOnePlayer.draw(window);
+			ButtonTwoPlayers.draw(window);
+		}
 
 		Highscore.draw(window);
 		Exit.draw(window);
 		//Back.draw(window);
 
-		if(!EntryMenu)
+		if (!EntryMenu) {
 			game_result.Display(window, { 75.f, 200.f }, score_string);
+			Restart.draw(window);				//drawing restart button is not necessary for initial menu
+		}
 
 
 		sf::Vector2i MousePos = sf::Mouse::getPosition(window);
@@ -146,13 +151,17 @@ void ShowMenu(sf::RenderWindow& window, bool EntryMenu, const int& score) {
 		// convert it to world coordinates *fullscreen now works correctly*
 		sf::Vector2f worldPos = window.mapPixelToCoords(MousePos);
 
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
-			break;
-		}
+		//if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
+		//	break;
+		//}
 		
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-			if (EntryMenu && ButtonStart.IsClicked(worldPos)) {
-				std::cout << "Good luck buddy" << std::endl;
+			if (EntryMenu && ButtonOnePlayer.IsClicked(worldPos)) {
+				std::cout << "One player mode" << std::endl;
+				break;
+			}
+			if (EntryMenu && ButtonTwoPlayers.IsClicked(worldPos)) {				//needs testing with server
+				net.CreateConnection();
 				break;
 			}
 
@@ -160,7 +169,7 @@ void ShowMenu(sf::RenderWindow& window, bool EntryMenu, const int& score) {
 				std::cout << "Highscores" << std::endl;
 				WindowText game_result(40);
 
-				while (1) {
+				while (1) {			//loop displaying highscores
 					MousePos = sf::Mouse::getPosition(window);
 					worldPos = window.mapPixelToCoords(MousePos);
 
@@ -185,6 +194,10 @@ void ShowMenu(sf::RenderWindow& window, bool EntryMenu, const int& score) {
 				}
 			}
 
+			if (Restart.IsClicked(worldPos)) {
+				return true;
+			}
+
 			if (Exit.IsClicked(worldPos)) {
 				std::cout << "See you next time" << std::endl;
 				exit(0);
@@ -193,4 +206,5 @@ void ShowMenu(sf::RenderWindow& window, bool EntryMenu, const int& score) {
 
 		window.display();
 	}
+	return false;
 }

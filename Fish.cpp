@@ -28,7 +28,9 @@ void Fish::LoadSprite() {
 		if (!tex_.loadFromFile(L4_file))
 			exit(-1);
 		break;
-			//for boosting shrimp
+
+	//=========boosts============
+
 	case FishType::SHRIMP: 
 		if (!tex_.loadFromFile(shrimp_file))
 			exit(-1);
@@ -37,9 +39,12 @@ void Fish::LoadSprite() {
 		if (!tex_.loadFromFile(oyster_file))
 			exit(-1);
 		break;
+	case FishType::COIN:
+		if (!tex_.loadFromFile(coin_file))
+			exit(-1);
+		break;
 	}
 }
-
 
 
 sf::Sprite Fish::GetSprite() const {
@@ -157,9 +162,11 @@ void ControlledFish::Eat(std::vector<AutomaticFish>& autoFish,
 	points_ += delta_pts_;
 	plus_pts_string = "+ " + to_str(delta_pts_);		//init'ing the string only once each time
 
+	Resize();
+
 	std::cout << "current points = " << points_ << std::endl;
 
-	time_fish_eaten_ = time;
+	time_text_effect_ = time;		//for plus points animation
 	
 	autoFish.erase(it_del);		//seems OK
 	
@@ -236,15 +243,61 @@ void ControlledFish::Draw(sf::RenderWindow &window, const float& time) {
 	fish_.setPosition(pos_.x, pos_.y);
 	window.draw(fish_);
 
-	if (time - time_fish_eaten_ < 0.75f)
+	if (time - time_text_effect_ < 0.75f)
 		PointsAnimation(window, time);
 }
+
+void ControlledFish::SpeedBoost(const float& time, const float& factor) {
+	if (!is_boost_applied) {		//если до этого нет ни одного буста (ускорителя)
+		speed_ = speed_ * factor;
+		time_boost_applied = time;
+		is_boost_applied = true;
+		boost_factor = factor;
+	}
+	else {
+		if (boost_factor == factor) {		//если то же самое ускорение - просто продлеваем время
+											//1.f каждый раз делает эффект длиннее (что-то вроде комбо)
+			time_boost_applied += 1.0f;
+		}
+		else {							//если ускорение другое - создаем их комбо, которое длится полное время
+										//возможно, стоит подумать над этой логикой
+			boost_factor = boost_factor * factor;
+			time_boost_applied = time;
+		}
+	}
+
+	//std::cout << "Boost by: " << boost_factor << std::endl;		//test purposes
+
+	time_text_effect_ = time;
+	plus_pts_string = "boost x" + to_str(boost_factor);		//init'ing the string only once each time
+}
+
+void ControlledFish::CheckBoost(const float& time) {		//убирает буст по истечении времени его применения
+	if ((time - time_boost_applied > 0.5f) && is_boost_applied) {
+		time_boost_applied = 0;
+		is_boost_applied = false;
+		speed_ = 0.5f;
+		//std::cout << "END " << std::endl;
+	}
+}
+
+void ControlledFish::CoinBoost(const int& points_added, const float& time) {
+	delta_pts_ = points_added;
+	points_ += delta_pts_;
+	plus_pts_string = "+ " + to_str(delta_pts_);		//init'ing the string only once each time
+
+	time_text_effect_ = time;		//for plus points animation
+
+	if (points_ >= type_limit_points[type_])
+		ChangeType();
+}
+
 
 
 void ControlledFish::PointsAnimation(sf::RenderWindow& window, const double& time) {
 	sf::Vector2f delta_pts_pos;
 	delta_pts_pos.x = pos_.x;
-	delta_pts_pos.y = pos_.y - tex_.getSize().y * scale_.y / 2 - 75 * (time - time_fish_eaten_);	//going up effect
+	delta_pts_pos.y = pos_.y - tex_.getSize().y * scale_.y / 2 - 75 * (time - time_text_effect_);	//going up effect
 
 	add_points_.Display(window, delta_pts_pos, plus_pts_string);
 }
@@ -254,6 +307,13 @@ int ControlledFish::GetScore() {
 	return points_;
 }
 
+//fish grows gradually
+void ControlledFish::Resize() {
+	if (type_ != FishType::L_4) {
+		scale_.x += (0.002f * delta_pts_);
+		scale_.y += (0.002f * delta_pts_);
+	}
+}
 
 
 
@@ -273,9 +333,6 @@ FishType FishGeneration::GenerateType() {
 	if (genType >= 90 && genType < 100)
 		type = FishType::L_4;
 
-	if (genType > 100)
-		type = FishType::SHRIMP;
-	
 	return type;
 }
 

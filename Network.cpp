@@ -57,11 +57,14 @@ void Network::GetAnotherFish(ControlledFish& anotherFish) {
     sf::Packet packet;
     sf::Vector2f pos;
     int type;
-    socket.receive(packet);
+	if (socket.receive(packet) == sf::Socket::NotReady) {
+		return;
+	}
     if (packet >> pos.x >> pos.y >> type) {
         anotherFish = ControlledFish(pos, static_cast<FishType> (type));
-        //std::cout << "anotherFish recieved! " << std::endl;
-        //std::cout << anotherFish.GetPosition().x << " " << anotherFish.GetPosition().y << " " << static_cast<int> (anotherFish.GetType()) <<std::endl;
+		//testing
+        std::cout << "anotherFish recieved! " << std::endl;
+        std::cout << "Position" << anotherFish.GetPosition().x << ":" << anotherFish.GetPosition().y << "\nLevel: " << static_cast<int> (anotherFish.GetType()) <<std::endl;
     }
 }
 
