@@ -199,6 +199,13 @@ void DrawEverything(Background& background, ControlledFish& fish, FishGeneration
 }
 
 bool GameStart(sf::RenderWindow& window, Network& net) {
+
+	sf::Music music;
+	music.openFromFile("C:/Users/User/MIPT/TheGame/Sounds/hard_fish.wav");
+	music.setVolume(10);
+	music.setLoop(true);
+	music.play();
+
 	//now choosing number of players (1/2) is inside of menu
 	ShowMenu(window, net, true, 0);		//go to menu.cpp
 										//true means that menu for game beginning is displayed
@@ -280,10 +287,17 @@ bool GameStart(sf::RenderWindow& window, Network& net) {
 		DrawEverything(background, fish, gen, boost, window, time.asSeconds());
 
 		//сюда добавляю передачу фона, чтобы вовремя его продлевать
-		fish.Control(TextureSize, window, background);
+		fish.Control(TextureSize, window, background, time.asSeconds());
 
 		//adding time into function for score animation
 		if (fish.DetectFish(gen.autoCreature, time.asSeconds())) {
+			sf::SoundBuffer crash_sound;
+			if (!crash_sound.loadFromFile("C:/Users/User/MIPT/TheGame/Sounds/crash.wav"))
+				exit(-1);
+			sf::Sound sound;
+			sound.setBuffer(crash_sound);
+			sound.play();
+			sf::sleep(sf::milliseconds(1000));
 			std::cout << "YOU ARE DEAD!" << std::endl;
 			return ShowMenu(window, net, false, fish.GetScore());			//returns true if restart
 		}

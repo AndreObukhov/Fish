@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SFML/Graphics.hpp"
+#include "SFML/Audio.hpp"
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -45,6 +46,12 @@ static std::map<FishType, sf::Vector2f> type_speed = { {FishType::L_1, {0.04, 0}
 
 
 
+enum class DirectionType {
+	UP, DOWN, LEFT, RIGHT
+};
+static std::map<DirectionType, float> directionType_angle = { {DirectionType::UP, 90}, {DirectionType::DOWN, 270},
+													   {DirectionType::RIGHT, 180}, {DirectionType::LEFT, 0} };
+
 
 class Fish {
 public:
@@ -60,7 +67,8 @@ protected:
 	sf::Texture tex_;
 	sf::Vector2f pos_;
 	sf::Vector2f scale_;
-	float speed_ = 0.5;
+	float speed_ = 500;
+	float angle_ = 180;
 	FishType type_;
 };
 
@@ -78,14 +86,19 @@ private:
 class ControlledFish : public Fish {
 public:
 	ControlledFish(const sf::Vector2f& pos, FishType type);
-	void Rotate(sf::RenderWindow& window, sf::Vector2f d);
-	//сюда добавляю передачу фона, чтобы вовремя его продлевать
-	void Move(sf::Vector2u& TextureSize, Background& background);
+
+	bool CheckSharpRotate(DirectionType newDirectionType);
+	void GradualRotate(DirectionType newDirectionType);
+
+	void Rotate(DirectionType newDirectionType);
+
+	void Move(sf::Vector2u& TextureSize, Background& background, const float& time);
 
 	void Laser(sf::RenderWindow& window, sf::Vector2f center, sf::Vector2f worldPos);
 
 	//сюда добавляю передачу фона, чтобы вовремя его продлевать + TextureSize по ссылке - она меняется с продолжением фона
-	void Control(sf::Vector2u& TextureSize, sf::RenderWindow& window, Background& background);
+	void Control(sf::Vector2u& TextureSize, sf::RenderWindow& window, Background& background, const float& time);
+
 	
 	//!!! -- added time to Eat, Draw, Detect to make "plus points" animation
 	void Draw(sf::RenderWindow& window, const float& time);
@@ -106,8 +119,13 @@ public:
 
 	void CheckBoost(const float& time);
 
+	void LoadSounds();
+	void PlaySound(sf::SoundBuffer buffer);
+
 private:
 	int points_ = 0;
+
+	sf::SoundBuffer collect_point_sound_;
 
 	//StatusBar bar_;
 
@@ -117,10 +135,15 @@ private:
 	float boost_factor = 1.f;
 	//end of boosts
 
+	float previous_control_time = 0;
+	DirectionType previous_direction = DirectionType::RIGHT;
+
+
 	//variables needed for displaying text above our fish
 	WindowText add_points_;
 	int delta_pts_ = 0;
 	std::string plus_pts_string;
+
 	float time_text_effect_;				//was time_fish_eaten
 
 	//function drawing text above controlled fish

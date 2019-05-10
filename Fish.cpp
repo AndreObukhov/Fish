@@ -1,4 +1,4 @@
-#include "pch.h"
+п»ї#include "pch.h"
 
 #include "fish.h"
 
@@ -51,7 +51,6 @@ sf::Sprite Fish::GetSprite() const {
 	return fish_;
 }
 
-
 sf::Vector2f Fish::GetPosition() const {
 	return pos_;
 }
@@ -70,7 +69,7 @@ AutomaticFish::AutomaticFish(const sf::Vector2f& pos, FishType type, const float
 //return true if fish is outside window
 bool AutomaticFish::Draw(const float &time, sf::RenderWindow& window) {
 	pos_.x -= speed_.x * (time - time_created_);
-	//усложнить траекторию!
+	//СѓСЃР»РѕР¶РЅРёС‚СЊ С‚СЂР°РµРєС‚РѕСЂРёСЋ!
 	speed_.y = sin(5 * time) / ((5 + rand() % 5) + (10 + rand() % 10) * (time - time_created_));
 	pos_.y += speed_.y * (time - time_created_);
 	fish_.setTexture(tex_);
@@ -78,45 +77,84 @@ bool AutomaticFish::Draw(const float &time, sf::RenderWindow& window) {
 	fish_.scale(1.0f, -1.0f);
 	fish_.setPosition(pos_.x, pos_.y);
 	window.draw(fish_);
+
 	return (pos_.x < 0);
 }
 
 //additionally setting size of font used to display points added
-ControlledFish::ControlledFish(const sf::Vector2f& pos, FishType type) : Fish(pos, type), add_points_(20) {}
-
-void ControlledFish::Rotate(sf::RenderWindow& window, sf::Vector2f d) {
-	const double Pi = 3.14159f;
-	double angle = 180 + atan2f(d.y, d.x) * 180.0 / Pi;
-	fish_.setRotation(angle);
+ControlledFish::ControlledFish(const sf::Vector2f& pos, FishType type) : Fish(pos, type), add_points_(20) {
+	LoadSounds();
 }
 
-void ControlledFish::Move(sf::Vector2u& TextureSize, Background& background) {
+
+bool ControlledFish::CheckSharpRotate(DirectionType newDirectionType) {
+	return (((previous_direction == DirectionType::UP) && (newDirectionType == DirectionType::DOWN)) ||
+		((previous_direction == DirectionType::DOWN) && (newDirectionType == DirectionType::UP)) ||
+		((previous_direction == DirectionType::LEFT) && (newDirectionType == DirectionType::RIGHT)) ||
+		((previous_direction == DirectionType::RIGHT) && (newDirectionType == DirectionType::LEFT)));
+}
+
+void ControlledFish::GradualRotate(DirectionType newDirectionType) {
+	float end_angle = directionType_angle[newDirectionType];
+	float sign = end_angle - angle_;
+	if (angle_ != end_angle) {
+		float d_angle;
+		if (((angle_ >= 0) && (angle_ < 90)) && (end_angle == 270))
+			angle_ = angle_ + 360 - 1;
+		else
+			if ((((angle_ < 360) && (angle_ > 270))) && (end_angle == 270))
+				angle_ -= 1;
+			else
+				if ((((angle_ < 360) && (angle_ >= 270))) && (end_angle == 0))
+					angle_ += 1;
+				else {
+					d_angle = (sign > 0) ? 1 : -1;
+					angle_ += d_angle;
+				}
+	}
+}
+
+void ControlledFish::Rotate(DirectionType newDirectionType) {
+	if (CheckSharpRotate(newDirectionType)) {
+		angle_ = directionType_angle[newDirectionType];
+	}
+	GradualRotate(newDirectionType);
+	previous_direction = newDirectionType;
+}
+
+void ControlledFish::Move(sf::Vector2u& TextureSize, Background& background, const float& current_time) {
+	float dt = (current_time - previous_control_time);
+	previous_control_time = current_time;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-		pos_.y -= speed_;
+		Rotate(DirectionType::UP);
+		pos_.y -= speed_ * dt;
 		if (!IsInsideWindow(TextureSize, pos_)) {
-			pos_.y += speed_;
+			pos_.y += speed_ * dt;
 		}
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-		pos_.y += speed_;
+		Rotate(DirectionType::DOWN);
+		pos_.y += speed_ * dt;
 		if (!IsInsideWindow(TextureSize, pos_)) {
-			pos_.y -= speed_;
+			pos_.y -= speed_ * dt;
 		}
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-		pos_.x += speed_;
+		Rotate(DirectionType::RIGHT);
+		pos_.x += speed_ * dt;
 
 		if (TextureSize.x < pos_.x + 500) {
 			std::cout << "Background added" << std::endl;
 			background.AddBackground();
-			TextureSize = background.GetBackgroundTextureSize();		//добавляет очередной кусок фона
+			TextureSize = background.GetBackgroundTextureSize();
 		}
 
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-		pos_.x -= speed_;
+		Rotate(DirectionType::LEFT);
+		pos_.x -= speed_ * dt;
 		if (!IsInsideWindow(TextureSize, pos_)) {
-			pos_.x += speed_;
+			pos_.x += speed_ * dt;
 		}
 	}
 
@@ -136,19 +174,16 @@ void ControlledFish::Laser(sf::RenderWindow& window, sf::Vector2f center, sf::Ve
 	}
 }
 
-void ControlledFish::Control(sf::Vector2u& textureSize, sf::RenderWindow& window, Background& background) {
+void ControlledFish::Control(sf::Vector2u& textureSize, sf::RenderWindow& window, Background& background, const float& time) {
 
 	sf::Vector2i pixelPos = sf::Mouse::getPosition(window);
 	sf::Vector2f worldPos = window.mapPixelToCoords(pixelPos);
 	sf::Vector2u fishSize = fish_.getTexture()->getSize();
-	fish_.setOrigin(fishSize.x / 2, fishSize.y / 2);
+	fish_.setOrigin(10, fishSize.y / 2);
 	sf::Vector2f center = fish_.getPosition();
 	sf::Vector2f d = sf::Vector2f(worldPos.x, worldPos.y) - center;
 
-	//сюда добавляю передачу фона, чтобы вовремя его продлевать
-	Move(textureSize, background);
-
-	Rotate(window, d);
+	Move(textureSize, background, time);
 	Laser(window, center, worldPos);
 }
 
@@ -169,6 +204,8 @@ void ControlledFish::Eat(std::vector<AutomaticFish>& autoFish,
 	time_text_effect_ = time;		//for plus points animation
 	
 	autoFish.erase(it_del);		//seems OK
+
+	PlaySound(collect_point_sound_);
 	
 	if (points_ >= type_limit_points[type_])
 		ChangeType();
@@ -188,7 +225,6 @@ void ControlledFish::ChangeType() {
 
 
 //return true if you died
-//template<typename T>
 bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish, const float& time) {
 	//it is here for now, need to find another place (probably)
 	CheckBoost(time);
@@ -202,11 +238,6 @@ bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish, const floa
 
 	while (it != autoFish.end()) {
 		if (isTouched(*it)) {
-			/*if ((*it).GetType() == FishType::SHRIMP) {
-				to_eat = it;
-				poedanie = true;
-				break;
-			}*/
 			if (type_ >= (*it).GetType()) {
 				to_eat = it;
 				poedanie = true;
@@ -222,45 +253,38 @@ bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish, const floa
 	if (poedanie) {
 		Eat(autoFish, to_eat, time);
 	}
-	/*for (AutomaticFish& fish : autoFish) {
-		if (isTouched(fish)) {
-			if (type_ >= fish.GetType()) {
-				Eat(autoFish, it);
-			}
-			else {
-				imDied = true;
-				break;
-			}
-		}
-		//it++;
-	}*/
+
 	return imDied;
 }
 
-void ControlledFish::Draw(sf::RenderWindow &window, const float& time) {
+void ControlledFish::Draw(sf::RenderWindow& window, const float& time) {
 	fish_.setTexture(tex_);
 	fish_.setScale(scale_);
 	fish_.setPosition(pos_.x, pos_.y);
+	fish_.setRotation(angle_);
+	if (((angle_ >= 0) && (angle_ < 90)) || ((angle_ > 270) && (angle_ < 360)))
+		fish_.scale(1.0f, -1.0f);
 	window.draw(fish_);
 
 	if (time - time_text_effect_ < 0.75f)
 		PointsAnimation(window, time);
 }
 
+
 void ControlledFish::SpeedBoost(const float& time, const float& factor) {
-	if (!is_boost_applied) {		//если до этого нет ни одного буста (ускорителя)
+	if (!is_boost_applied) {		//РµСЃР»Рё РґРѕ СЌС‚РѕРіРѕ РЅРµС‚ РЅРё РѕРґРЅРѕРіРѕ Р±СѓСЃС‚Р° (СѓСЃРєРѕСЂРёС‚РµР»СЏ)
 		speed_ = speed_ * factor;
 		time_boost_applied = time;
 		is_boost_applied = true;
 		boost_factor = factor;
 	}
 	else {
-		if (boost_factor == factor) {		//если то же самое ускорение - просто продлеваем время
-											//1.f каждый раз делает эффект длиннее (что-то вроде комбо)
+		if (boost_factor == factor) {		//РµСЃР»Рё С‚Рѕ Р¶Рµ СЃР°РјРѕРµ СѓСЃРєРѕСЂРµРЅРёРµ - РїСЂРѕСЃС‚Рѕ РїСЂРѕРґР»РµРІР°РµРј РІСЂРµРјСЏ
+											//1.f РєР°Р¶РґС‹Р№ СЂР°Р· РґРµР»Р°РµС‚ СЌС„С„РµРєС‚ РґР»РёРЅРЅРµРµ (С‡С‚Рѕ-С‚Рѕ РІСЂРѕРґРµ РєРѕРјР±Рѕ)
 			time_boost_applied += 1.0f;
 		}
-		else {							//если ускорение другое - создаем их комбо, которое длится полное время
-										//возможно, стоит подумать над этой логикой
+		else {							//РµСЃР»Рё СѓСЃРєРѕСЂРµРЅРёРµ РґСЂСѓРіРѕРµ - СЃРѕР·РґР°РµРј РёС… РєРѕРјР±Рѕ, РєРѕС‚РѕСЂРѕРµ РґР»РёС‚СЃСЏ РїРѕР»РЅРѕРµ РІСЂРµРјСЏ
+										//РІРѕР·РјРѕР¶РЅРѕ, СЃС‚РѕРёС‚ РїРѕРґСѓРјР°С‚СЊ РЅР°Рґ СЌС‚РѕР№ Р»РѕРіРёРєРѕР№
 			boost_factor = boost_factor * factor;
 			time_boost_applied = time;
 		}
@@ -272,11 +296,11 @@ void ControlledFish::SpeedBoost(const float& time, const float& factor) {
 	plus_pts_string = "boost x" + to_str(boost_factor);		//init'ing the string only once each time
 }
 
-void ControlledFish::CheckBoost(const float& time) {		//убирает буст по истечении времени его применения
+void ControlledFish::CheckBoost(const float& time) {		//СѓР±РёСЂР°РµС‚ Р±СѓСЃС‚ РїРѕ РёСЃС‚РµС‡РµРЅРёРё РІСЂРµРјРµРЅРё РµРіРѕ РїСЂРёРјРµРЅРµРЅРёСЏ
 	if ((time - time_boost_applied > 0.5f) && is_boost_applied) {
 		time_boost_applied = 0;
 		is_boost_applied = false;
-		speed_ = 0.5f;
+		speed_ = 500.f;
 		//std::cout << "END " << std::endl;
 	}
 }
@@ -316,12 +340,24 @@ void ControlledFish::Resize() {
 }
 
 
+void ControlledFish::LoadSounds() {
+	if (!collect_point_sound_.loadFromFile("C:/Users/User/MIPT/TheGame/Sounds/collect_point.wav"))
+		exit(-1);
+}
+
+void ControlledFish::PlaySound(sf::SoundBuffer buffer) {
+	sf::Sound sound;
+	sound.setBuffer(buffer);
+	sound.play();
+}
+
+
 
 
 FishGeneration::FishGeneration() {}
 
 FishType FishGeneration::GenerateType() {
-	//чтобы было распределение "чем выше рыба по уровню, тем реже появляется"
+	//С‡С‚РѕР±С‹ Р±С‹Р»Рѕ СЂР°СЃРїСЂРµРґРµР»РµРЅРёРµ "С‡РµРј РІС‹С€Рµ СЂС‹Р±Р° РїРѕ СѓСЂРѕРІРЅСЋ, С‚РµРј СЂРµР¶Рµ РїРѕСЏРІР»СЏРµС‚СЃСЏ"
 	int genType = rand() % 100;
 	FishType type;
 	if (genType < 40)
@@ -347,8 +383,8 @@ void FishGeneration::Draw(const float &time, sf::RenderWindow& window) {
 }
 */
 
-//сюда теперь передаем самого перса, чтобы на расстоянии от него генерились рыбы
-//а не на конце окна(иначе беда)
+//СЃСЋРґР° С‚РµРїРµСЂСЊ РїРµСЂРµРґР°РµРј СЃР°РјРѕРіРѕ РїРµСЂСЃР°, С‡С‚РѕР±С‹ РЅР° СЂР°СЃСЃС‚РѕСЏРЅРёРё РѕС‚ РЅРµРіРѕ РіРµРЅРµСЂРёР»РёСЃСЊ СЂС‹Р±С‹
+//Р° РЅРµ РЅР° РєРѕРЅС†Рµ РѕРєРЅР°(РёРЅР°С‡Рµ Р±РµРґР°)
 
 void FishGeneration::GenerateFish(const float &time, const sf::Vector2f& current_fish) {
 	if (time > last_creation_time) {
