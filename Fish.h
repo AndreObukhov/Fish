@@ -53,6 +53,7 @@ static std::map<DirectionType, float> directionType_angle = { {DirectionType::UP
 													   {DirectionType::RIGHT, 180}, {DirectionType::LEFT, 0} };
 
 
+
 class Fish {
 public:
 	Fish(const sf::Vector2f& pos, FishType type);
@@ -62,6 +63,7 @@ public:
 	sf::Vector2f GetPosition() const;
 	FishType GetType() const;
 
+	virtual ~Fish() = default;
 protected:
 	sf::Sprite fish_;
 	sf::Texture tex_;
@@ -77,6 +79,7 @@ public:
 	AutomaticFish(const sf::Vector2f& pos, FishType type, const float& time);
 	bool Draw(const float &time, sf::RenderWindow& window);
 
+	sf::FloatRect DangerZone() const;			//to make eating more realistic
 private:
 	float time_created_;
 	sf::Vector2f  speed_;
@@ -87,12 +90,15 @@ class ControlledFish : public Fish {
 public:
 	ControlledFish(const sf::Vector2f& pos, FishType type);
 
+
 	bool CheckSharpRotate(DirectionType newDirectionType);
 	void GradualRotate(DirectionType newDirectionType);
 
 	void Rotate(DirectionType newDirectionType);
 
 	void Move(sf::Vector2u& TextureSize, Background& background, const float& time);
+
+	sf::FloatRect FishMouth() const;			//to make eating more realistic
 
 	void Laser(sf::RenderWindow& window, sf::Vector2f center, sf::Vector2f worldPos);
 
@@ -105,7 +111,7 @@ public:
 
 	template<typename T>			//interaction with both autoFish and boost creatures
 	bool isTouched(const T& Creature) {
-		return fish_.getGlobalBounds().intersects(Creature.GetSprite().getGlobalBounds());
+		return FishMouth().intersects(Creature.DangerZone());
 	}
 
 	bool DetectFish(std::vector<AutomaticFish>& autoFish, const float& time);
@@ -127,7 +133,10 @@ private:
 
 	sf::SoundBuffer collect_point_sound_;
 
-	//StatusBar bar_;
+
+	StatusBar bar_;			//right top corner, shows how much is left until the next level
+	StatusBar boost_bar_;	//r.t.c, shows how much boost is left
+
 
 	//make struct FishBoost where all of this is stored
 	bool is_boost_applied = false;

@@ -8,8 +8,10 @@
 class Booster : public AutomaticFish {
 public:
 	Booster(const sf::Vector2f& pos, const float& time, const FishType& type);
+	sf::FloatRect DangerZone() const;
 	//float GetBoost();
 	virtual void Apply(ControlledFish& fish, const float& time);
+	virtual ~Booster() = default;
 };
 
 class Shrimp : public Booster {

@@ -150,3 +150,22 @@ void DisplayText(sf::RenderWindow& window, const sf::Vector2f& position, const u
 	win_text.setString(text);
 	window.draw(win_text);
 }*/
+
+StatusBar::StatusBar(sf::Color color) {
+	bar.setFillColor(color);
+
+	frame.setFillColor(sf::Color::Transparent);
+	frame.setOutlineThickness(0.5f);
+	frame.setOutlineColor(color);
+	frame.setSize(sf::Vector2f(100.f, 10.f));
+}
+
+void StatusBar::Draw(sf::RenderWindow& window, const float& progress, const float& level_limit, const int& height) {
+	bar.setPosition(window.mapPixelToCoords({ (int)window.getSize().x - 300, height }));
+	bar.setSize(sf::Vector2f(progress * 100.f / level_limit, 10.f));
+
+	frame.setPosition(window.mapPixelToCoords({ (int)window.getSize().x - 300, height }));
+
+	window.draw(bar);
+	window.draw(frame);
+}

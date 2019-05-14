@@ -43,7 +43,8 @@ private:
 	float y_position;				//где по высоте в столбике кнопок (разность лучше делать около 100)
 };
 
-bool ShowMenu(sf::RenderWindow& window, Network& net, bool EntryMenu, const int& score);
+bool ShowMenu(sf::RenderWindow& window, Network& net, bool EntryMenu, bool& multiplayer_mode, const int& score);
 //returns true if another restart cycle
+//bool multiplayer_mode added to draw the second fish only in two players mode
 
 //void ShowNetworkMenu(Network& net, sf::RenderWindow& window);

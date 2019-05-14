@@ -8,6 +8,10 @@ void Booster::Apply(ControlledFish& fish, const float& time) {
 	std::cout << "No booster selected" << std::endl;	
 }
 
+sf::FloatRect Booster::DangerZone() const {
+	return fish_.getGlobalBounds();
+}
+
 
 Shrimp::Shrimp(const sf::Vector2f& pos, const float& time) : Booster(pos, time, FishType::SHRIMP) {
 	boost_ = 2.0f;

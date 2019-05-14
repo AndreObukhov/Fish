@@ -64,22 +64,18 @@ private:
 };
 
 
+//draws bars in right side of the window (height ajusted as a param of Draw function)
+//color must be declared in a constructor
 class StatusBar {
 public:
-	StatusBar(const sf::Vector2f& pos) {
-		bar.setPosition(pos);
-		bar.setFillColor(sf::Color::Green);
-		progress = 0;
-	}
+	StatusBar(sf::Color color);
 
-	void Draw(sf::RenderWindow& window, const float& progress) {
-		bar.setSize(sf::Vector2f(progress, 50.f));
-		window.draw(bar);
-	}
+	void Draw(sf::RenderWindow& window, const float& progress, const float& level_limit, const int& height);
 
 private:
-	float progress;		//progress is from 0 to 1 - ratio until next fish level
+	//bar consists of two parts: transparent frame and a rectangle of changing size that "fills" it
 	sf::RectangleShape bar;
+	sf::RectangleShape frame;
 };
 
 //void DisplayText(sf::RenderWindow& window, const sf::Vector2f& position, const unsigned& size, std::string text);

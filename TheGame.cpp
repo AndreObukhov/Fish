@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 
 #include "SFML/Graphics.hpp"
+#include "SFML/Audio.hpp"
 #include "Menu.h"
 #include "BackGround.h"
 #include "Fish.h"
@@ -198,7 +199,7 @@ void DrawEverything(Background& background, ControlledFish& fish, FishGeneration
 	gen.Draw(time, window);
 }
 
-bool GameStart(sf::RenderWindow& window, Network& net) {
+bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if restart, false if exit.
 
 	sf::Music music;
 	music.openFromFile("C:/Users/User/MIPT/TheGame/Sounds/hard_fish.wav");
@@ -206,8 +207,10 @@ bool GameStart(sf::RenderWindow& window, Network& net) {
 	music.setLoop(true);
 	music.play();
 
+	bool multiplayer_mode = false;
+
 	//now choosing number of players (1/2) is inside of menu
-	ShowMenu(window, net, true, 0);		//go to menu.cpp
+	ShowMenu(window, net, true, multiplayer_mode, 0);		//go to menu.cpp
 										//true means that menu for game beginning is displayed
 
 	sf::Clock clock;
@@ -243,7 +246,8 @@ bool GameStart(sf::RenderWindow& window, Network& net) {
 
 	//Shrimp shrimp({ 220.f, 200.f }, 0);			//testing how it works
 
-	int i = 0;			//for limiting number of send/receive during connection
+	float time_sent = 0;			//for limiting number of send/receive during connection
+	
 
 	while (window.isOpen())
 	{
@@ -271,21 +275,24 @@ bool GameStart(sf::RenderWindow& window, Network& net) {
 		view_.setCenter(view_Center);
 		window.setView(view_);						//!!!Dont forget or view is useless
 
-
-		if (i == 50) {			//test
-			//вынести в отдельный поток...
-			//----------network----------
-			net.SendMyFish(fish);
-			net.GetAnotherFish(anotherFish);
-			//---------------------------
-			i = 0;
+		if (multiplayer_mode) {
+			if (time.asSeconds() - time_sent > 0.25f) {			//test
+				//вынести в отдельный поток...
+				//----------network----------
+				net.SendMyFish(fish);
+				net.GetAnotherFish(anotherFish);
+				//---------------------------
+				time_sent = time.asSeconds();
+			}
 		}
-		i++;
 
 
 		//here we also can draw another fish in 2-player-mode
 		DrawEverything(background, fish, gen, boost, window, time.asSeconds());
 
+		if (multiplayer_mode) {
+			anotherFish.Draw(window, time.asSeconds());
+		}
 		//сюда добавляю передачу фона, чтобы вовремя его продлевать
 		fish.Control(TextureSize, window, background, time.asSeconds());
 
@@ -299,7 +306,7 @@ bool GameStart(sf::RenderWindow& window, Network& net) {
 			sound.play();
 			sf::sleep(sf::milliseconds(1000));
 			std::cout << "YOU ARE DEAD!" << std::endl;
-			return ShowMenu(window, net, false, fish.GetScore());			//returns true if restart
+			return ShowMenu(window, net, false, multiplayer_mode, fish.GetScore());			//returns true if restart
 		}
 
 		//drawing score text in right top corner
@@ -316,7 +323,7 @@ bool GameStart(sf::RenderWindow& window, Network& net) {
 
 		//returns true if restart
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && CloseButton.IsClicked(worldPos)) {
-			return ShowMenu(window, net, false, fish.GetScore());
+			return ShowMenu(window, net, false, multiplayer_mode, fish.GetScore());
 		}
 
 		//=========think about how to integrate it=========\\
@@ -329,7 +336,7 @@ bool GameStart(sf::RenderWindow& window, Network& net) {
 			hook_pos = boat.Attack(window);
 			if (IsOnTheHook(fish.GetSprite(), hook_pos)) {
 				std::cout << "You fucked up" << std::endl;
-				ShowMenu(window, net, false, fish.GetScore());
+				ShowMenu(window, net, false, multiplayer_mode, fish.GetScore());
 			}
 		}
 

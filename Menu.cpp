@@ -96,7 +96,7 @@ std::string GetHighscores() {
 }
 
 
-bool ShowMenu(sf::RenderWindow& window, Network& net, bool EntryMenu, const int& score) {
+bool ShowMenu(sf::RenderWindow& window, Network& net, bool EntryMenu, bool& multiplayer_mode, const int& score) {
 	Button ButtonOnePlayer("one player", 100.f);
 	Button ButtonTwoPlayers("two players", 200.f);
 	Button Highscore("show highscore", 300.f);
@@ -161,6 +161,7 @@ bool ShowMenu(sf::RenderWindow& window, Network& net, bool EntryMenu, const int&
 				break;
 			}
 			if (EntryMenu && ButtonTwoPlayers.IsClicked(worldPos)) {				//needs testing with server
+				multiplayer_mode = true;
 				net.CreateConnection();
 				break;
 			}

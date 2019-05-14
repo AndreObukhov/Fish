@@ -59,6 +59,27 @@ FishType Fish::GetType() const {
 	return type_;
 }
 
+
+sf::FloatRect ControlledFish::FishMouth() const {					//counts current coordinates of what should be fish mouth
+	sf::FloatRect mouth = fish_.getGlobalBounds();
+	mouth.left += 0.8f * fish_.getTexture()->getSize().x * scale_.x;
+	mouth.top += 0.3f * fish_.getTexture()->getSize().y * scale_.y;
+	
+	mouth.height *= 0.3f;
+	mouth.width *= 0.2f;
+
+	return mouth;
+}
+
+sf::FloatRect AutomaticFish::DangerZone() const {		//fish is eaten only "face to face"
+	sf::FloatRect body = fish_.getGlobalBounds();
+	body.top += 0.2f * fish_.getTexture()->getSize().y * scale_.y;
+	body.height *= 0.6f;
+	body.width *= 0.5f;
+	return body;
+}
+
+
 AutomaticFish::AutomaticFish(const sf::Vector2f& pos, FishType type, const float& time) : 
 	Fish(pos, type), time_created_(time) {
 	speed_ = type_speed[type];
@@ -82,7 +103,8 @@ bool AutomaticFish::Draw(const float &time, sf::RenderWindow& window) {
 }
 
 //additionally setting size of font used to display points added
-ControlledFish::ControlledFish(const sf::Vector2f& pos, FishType type) : Fish(pos, type), add_points_(20) {
+ControlledFish::ControlledFish(const sf::Vector2f& pos, FishType type) : Fish(pos, type), add_points_(20), 
+						bar_(sf::Color::Green), boost_bar_(sf::Color::Red) {
 	LoadSounds();
 }
 
@@ -205,7 +227,7 @@ void ControlledFish::Eat(std::vector<AutomaticFish>& autoFish,
 	
 	autoFish.erase(it_del);		//seems OK
 
-	PlaySound(collect_point_sound_);
+	//PlaySound(collect_point_sound_);
 	
 	if (points_ >= type_limit_points[type_])
 		ChangeType();
@@ -266,6 +288,23 @@ void ControlledFish::Draw(sf::RenderWindow& window, const float& time) {
 		fish_.scale(1.0f, -1.0f);
 	window.draw(fish_);
 
+
+	//drawing progress bar until the next level
+	if (type_ != FishType::L_4) {
+		if (type_ == FishType::L_1)
+			bar_.Draw(window, points_, type_limit_points[type_], 80);
+		else {
+			int prev_type = static_cast<int> (type_) - 1;
+			bar_.Draw(window, points_ - type_limit_points[static_cast<FishType> (prev_type)],
+				type_limit_points[type_] - type_limit_points[static_cast<FishType> (prev_type)], 80);
+		}
+	}
+	
+	//drawing a bar indicating how much boost is left
+	if (is_boost_applied) {
+		boost_bar_.Draw(window, 1.f - (time - time_boost_applied), 1.f, 130);
+	}
+
 	if (time - time_text_effect_ < 0.75f)
 		PointsAnimation(window, time);
 }
@@ -297,7 +336,7 @@ void ControlledFish::SpeedBoost(const float& time, const float& factor) {
 }
 
 void ControlledFish::CheckBoost(const float& time) {		//убирает буст по истечении времени его применения
-	if ((time - time_boost_applied > 0.5f) && is_boost_applied) {
+	if ((time - time_boost_applied > 1.f) && is_boost_applied) {
 		time_boost_applied = 0;
 		is_boost_applied = false;
 		speed_ = 500.f;
@@ -348,10 +387,9 @@ void ControlledFish::LoadSounds() {
 void ControlledFish::PlaySound(sf::SoundBuffer buffer) {
 	sf::Sound sound;
 	sound.setBuffer(buffer);
+	//sound.setVolume(20);
 	sound.play();
 }
-
-
 
 
 FishGeneration::FishGeneration() {}
