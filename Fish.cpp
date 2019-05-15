@@ -62,11 +62,36 @@ FishType Fish::GetType() const {
 
 sf::FloatRect ControlledFish::FishMouth() const {					//counts current coordinates of what should be fish mouth
 	sf::FloatRect mouth = fish_.getGlobalBounds();
-	mouth.left += 0.8f * fish_.getTexture()->getSize().x * scale_.x;
-	mouth.top += 0.3f * fish_.getTexture()->getSize().y * scale_.y;
+
+	//std::cout << "Before" << mouth.left << ":" << mouth.top << std::endl;
+
+	switch (type_)
+	{
+	case FishType::L_1:
+		mouth.top += 0.5f * fish_.getTexture()->getSize().y * scale_.y *(1.f + sin(angle_ - 180.f));
+		mouth.height *= 0.3f;
+		break;
+	case FishType::L_2:
+		mouth.top += 0.5f * fish_.getTexture()->getSize().y * scale_.y * (1.f + sin(angle_ - 180.f));
+		mouth.height *= 0.25f;
+		break;
+	case FishType::L_3:
+		mouth.top += 0.6f * fish_.getTexture()->getSize().y * scale_.y *(1.f + 0.5f * sin(angle_ - 180.f));
+		mouth.height *= 0.2f;
+		break;
+	case FishType::L_4:
+		mouth.top += 0.8f * fish_.getTexture()->getSize().y * scale_.y * (1 + 0.2f * sin(angle_ - 180.f));
+		mouth.height *= 0.1f;
+		break;
 	
-	mouth.height *= 0.3f;
+	default:
+		break;
+	}
+
+	mouth.left += 0.4f * fish_.getTexture()->getSize().x * scale_.x * (1.f + cos(angle_ - 180.f));
 	mouth.width *= 0.2f;
+
+	//std::cout << "After" << mouth.left << ":" << mouth.top << std::endl;
 
 	return mouth;
 }
@@ -75,7 +100,8 @@ sf::FloatRect AutomaticFish::DangerZone() const {		//fish is eaten only "face to
 	sf::FloatRect body = fish_.getGlobalBounds();
 	body.top += 0.2f * fish_.getTexture()->getSize().y * scale_.y;
 	body.height *= 0.6f;
-	body.width *= 0.5f;
+	body.left -= 0.1 * fish_.getTexture()->getSize().x * scale_.x;
+	body.width *= 0.8f;
 	return body;
 }
 
@@ -305,6 +331,7 @@ void ControlledFish::Draw(sf::RenderWindow& window, const float& time) {
 		boost_bar_.Draw(window, 1.f - (time - time_boost_applied), 1.f, 130);
 	}
 
+	//+pts animation above the fish
 	if (time - time_text_effect_ < 0.75f)
 		PointsAnimation(window, time);
 }

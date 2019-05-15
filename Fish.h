@@ -69,8 +69,8 @@ protected:
 	sf::Texture tex_;
 	sf::Vector2f pos_;
 	sf::Vector2f scale_;
-	float speed_ = 500;
-	float angle_ = 180;
+	float speed_ = 500.f;
+	float angle_ = 180.f;
 	FishType type_;
 };
 
