@@ -5,6 +5,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
 #include <string>
+#include <vector>
 #include <iostream>
 
 using namespace std;
@@ -18,7 +19,7 @@ private:
 public:
 	Network();
 	void CreateConnection();
-	void GetAnotherFish(AnotherPlayerFish& otherFish);
+	void GetAnotherFish(AnotherPlayerFish& anotherFish, std::vector<AutomaticFish>& fishes, const float& client_time);
 	void SendMyFish(const ControlledFish& myFish);
 
 };
@@ -85,4 +86,4 @@ public:
 //    }
 //    system("pause");
 //    return 0;
-//}
+//

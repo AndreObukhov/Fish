@@ -53,8 +53,10 @@ void Network::CreateConnection() {
 }
 
 
-void Network::GetAnotherFish(AnotherPlayerFish& anotherFish) {
+void Network::GetAnotherFish(AnotherPlayerFish& anotherFish, std::vector<AutomaticFish>& fishes, 
+								const float& client_time) {
 	sf::Packet packet;
+	int packet_type = 0;
 	sf::Vector2f pos;
 	int type;
 	float angle;
@@ -63,22 +65,32 @@ void Network::GetAnotherFish(AnotherPlayerFish& anotherFish) {
 	if (socket.receive(packet) == sf::Socket::NotReady) {
 		return;
 	}
-	if (packet >> pos.x >> pos.y >> type >> angle >> directionType >> speed) {
-		anotherFish.NetUpdate(pos, static_cast<FishType> (type), angle, static_cast<DirectionType>(directionType), speed);
-		//testing
-		std::cout << "anotherFish recieved! " << std::endl;
+	packet >> packet_type;
+	if (packet_type == 1) {
+		if (packet >> pos.x >> pos.y >> type >> angle >> directionType >> speed) {
+			anotherFish.NetUpdate(pos, static_cast<FishType> (type), angle, static_cast<DirectionType>(directionType), speed);
+			//testing
+			std::cout << "anotherFish recieved! " << std::endl;
 		//        std::cout << anotherFish.GetPosition().x << " " << anotherFish.GetPosition().y << " "
 		//                  << static_cast<int> (anotherFish.GetType()) << " "
 		//                  << anotherFish.GetAngle() << " "
 		//                  << static_cast<int> (anotherFish.GetDirectionType()) << " "
 		//                  << anotherFish.GetSpeed() << " "
 		//                  << std::endl;
+		}
+	}
+
+	if (packet_type == 2) {
+		if (packet >> pos.x >> pos.y >> type) {
+			fishes.push_back(AutomaticFish(pos, static_cast<FishType> (type), client_time));
+			std::cout << "Fish from server added sucessfully" << std::endl;
+		}
 	}
 }
 
 void Network::SendMyFish(const ControlledFish& myFish) {
 	sf::Packet packet;
-	packet << myFish.GetPosition().x << myFish.GetPosition().y << static_cast<int> (myFish.GetType())
+	packet << 1 << myFish.GetPosition().x << myFish.GetPosition().y << static_cast<int> (myFish.GetType())
 		<< myFish.GetAngle() << static_cast<int> (myFish.GetDirectionType()) << myFish.GetSpeed();
 	socket.send(packet);
 }

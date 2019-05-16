@@ -183,8 +183,8 @@ private:
 	}
 }*/
 
-void DrawEverything(Background& background, ControlledFish& fish, FishGeneration& gen, 
-					BoostGeneration& boost, sf::RenderWindow& window, const float& time) {
+void DrawEverything(Background& background, ControlledFish& fish, FishGeneration& gen,
+					BoostGeneration& boost, sf::RenderWindow& window, const float& time, bool multipayer_mode) {
 	background.draw(window);
 	background.Bubbles(fish.GetPosition().x, time, window);
 
@@ -194,8 +194,9 @@ void DrawEverything(Background& background, ControlledFish& fish, FishGeneration
 	boost.Generate(time, fish);		//applying boost to the fish is inside of this function
 	boost.Draw(time, window);
 
-
-	gen.GenerateFish(time, fish.GetPosition());			//сюда передаем фон, чтобы с его обновлением рисовалось корректно
+	if (!multipayer_mode) {
+		gen.GenerateFish(time, fish.GetPosition());			//сюда передаем фон, чтобы с его обновлением рисовалось корректно
+	}
 	gen.Draw(time, window);
 }
 
@@ -279,15 +280,16 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 				//вынести в отдельный поток...
 				//----------network----------
 				net.SendMyFish(fish);
-				net.GetAnotherFish(anotherFish);
+
+				//передаем вектор рыб, управляемых компом, чтобы была генерация как на сервере
+				net.GetAnotherFish(anotherFish, gen.autoCreature, time.asSeconds());
 				//---------------------------
 				time_sent = time.asSeconds();
 			}
 		}
 
-
 		//here we also can draw another fish in 2-player-mode
-		DrawEverything(background, fish, gen, boost, window, time.asSeconds());
+		DrawEverything(background, fish, gen, boost, window, time.asSeconds(), multiplayer_mode);
 
 		if (multiplayer_mode) {
 			anotherFish.UpdatePosition(time.asSeconds());

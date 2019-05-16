@@ -138,7 +138,7 @@ bool AutomaticFish::Draw(const float &time, sf::RenderWindow& window) {
 	fish_.setPosition(pos_.x, pos_.y);
 	window.draw(fish_);
 
-	return (pos_.x < 0);
+	return (time - time_created_ > life_time);
 }
 
 //additionally setting size of font used to display points added
@@ -226,6 +226,8 @@ void ControlledFish::Move(sf::Vector2u& TextureSize, Background& background, con
 		Rotate(DirectionType::NOWHERE);
 	}
 }
+
+
 
 void ControlledFish::Laser(sf::RenderWindow& window, sf::Vector2f center, sf::Vector2f worldPos) {
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)) {        //laser
@@ -538,7 +540,7 @@ void FishGeneration::Draw(const float &time, sf::RenderWindow& window) {
 //сюда теперь передаем самого перса, чтобы на расстоянии от него генерились рыбы
 //а не на конце окна(иначе беда)
 
-void FishGeneration::GenerateFish(const float &time, const sf::Vector2f& current_fish) {
+void FishGeneration::GenerateFish(const float& time, const sf::Vector2f& current_fish) {
 	if (time > last_creation_time) {
 		float x = current_fish.x + 600.f + rand() % 400;
 		float y = 100 + rand() % 400;			//?????

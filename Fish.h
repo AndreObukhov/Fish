@@ -25,6 +25,8 @@ const std::string shrimp_file = "C:/Users/User/MIPT/TheGame/Images/Shrimp.png";
 const std::string oyster_file = "C:/Users/User/MIPT/TheGame/Images/Oyster.png";
 const std::string coin_file = "C:/Users/User/MIPT/TheGame/Images/Coin.png";
 
+const float life_time = 30.f;
+
 
 enum class FishType {
 	L_1 = 1, L_2 = 2, L_3 = 3, L_4 = 4, SHRIMP = 5, OYSTER = 6, COIN = 7
@@ -51,7 +53,7 @@ enum class DirectionType {
 };
 static std::map<DirectionType, float> directionType_angle = { {DirectionType::UP, 90}, {DirectionType::DOWN, 270},
 													   {DirectionType::RIGHT, 180}, {DirectionType::LEFT, 0}, 
-													   {DirectionType::NOWHERE, 1}, };
+													   {DirectionType::NOWHERE, 180}, };
 
 
 
@@ -183,31 +185,33 @@ private:
 	void Resize();
 };
 
+/*
 //do not need this anymore as Boosts generate another way
 template<class T>
 class Generator {
 public:
 	Generator() {}
 
-	void Draw(const float& time, sf::RenderWindow& window) {
-		for (int i = 0; i < autoCreature.size(); ++i) {
-			if (autoCreature[i].Draw(time, window)) {
-				autoCreature.erase(autoCreature.begin() + i);
-			}
-		}
-	}
 	
-	std::vector<T> autoCreature;
 };
+*/
 
-
-class FishGeneration : public Generator<AutomaticFish> {
+class FishGeneration {
 public:
 	FishGeneration();
 	FishType GenerateType();
 	void GenerateFish(const float &time, const sf::Vector2f& current_fish);
-	//void Draw(const float &time, sf::RenderWindow& window);
-	//std::vector<AutomaticFish> autoFish;
+
+	void Draw(const float& time, sf::RenderWindow& window) {
+		for (int i = 0; i < autoCreature.size(); ++i) {
+			if (autoCreature[i].Draw(time, window)) {
+				autoCreature.erase(autoCreature.begin() + i);
+				//std::cout << "Fish " << i << " deleted" << std::endl;
+			}
+		}
+	}
+
+	std::vector<AutomaticFish> autoCreature;
 private:
 	float last_creation_time = 0;
 };
