@@ -86,11 +86,26 @@ void Network::GetAnotherFish(AnotherPlayerFish& anotherFish, std::vector<Automat
 			std::cout << "Fish from server added sucessfully" << std::endl;
 		}
 	}
+
+	if (packet_type == 3) {
+		int index;
+		if (packet >> index) {
+			auto it = fishes.begin() + index;
+			fishes.erase(it);
+			std::cout << "Fish from server erased sucessfully" << std::endl;
+		}
+	}
 }
 
 void Network::SendMyFish(const ControlledFish& myFish) {
 	sf::Packet packet;
 	packet << 1 << myFish.GetPosition().x << myFish.GetPosition().y << static_cast<int> (myFish.GetType())
 		<< myFish.GetAngle() << static_cast<int> (myFish.GetDirectionType()) << myFish.GetSpeed();
+	socket.send(packet);
+}
+
+void Network::FishEaten(const int& index) {
+	sf::Packet packet;
+	packet << 3 << index;
 	socket.send(packet);
 }

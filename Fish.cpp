@@ -299,7 +299,7 @@ DirectionType ControlledFish::GetDirectionType()  const {
 }
 
 //return true if you died
-bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish, const float& time) {
+bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish, const float& time, int& number_fish_eaten) {
 	//it is here for now, need to find another place (probably)
 	CheckBoost(time);
 
@@ -325,7 +325,12 @@ bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish, const floa
 	}
 
 	if (poedanie) {
+		int number_fish_eaten = to_eat - autoFish.begin();
+		std::cout << number_fish_eaten << std::endl;
 		Eat(autoFish, to_eat, time);
+	}
+	else {
+		number_fish_eaten = -1;
 	}
 
 	return imDied;

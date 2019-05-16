@@ -21,6 +21,7 @@ public:
 	void CreateConnection();
 	void GetAnotherFish(AnotherPlayerFish& anotherFish, std::vector<AutomaticFish>& fishes, const float& client_time);
 	void SendMyFish(const ControlledFish& myFish);
+	void FishEaten(const int& index);
 
 };
 

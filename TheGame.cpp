@@ -247,6 +247,9 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 
 
 	float time_sent = 0;			//for limiting number of send/receive during connection
+
+	int number_fish_eaten = -1;				//number of fish that is eaten by client
+											//-1 if client eats no fishes
 	
 
 	while (window.isOpen())
@@ -276,6 +279,11 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 		window.setView(view_);						//!!!Dont forget or view is useless
 
 		if (multiplayer_mode) {
+			if (number_fish_eaten != -1) {
+				net.FishEaten(number_fish_eaten);
+				number_fish_eaten = -1;
+			}
+
 			if (time.asSeconds() - time_sent > 0.3f) {			//test
 				//вынести в отдельный поток...
 				//----------network----------
@@ -299,7 +307,7 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 		fish.Control(TextureSize, window, background, time.asSeconds());
 
 		//adding time into function for score animation
-		if (fish.DetectFish(gen.autoCreature, time.asSeconds())) {
+		if (fish.DetectFish(gen.autoCreature, time.asSeconds(), number_fish_eaten)) {
 			sf::SoundBuffer crash_sound;
 
 			if (!crash_sound.loadFromFile("C:/Users/User/MIPT/TheGame/Sounds/crash.wav"))

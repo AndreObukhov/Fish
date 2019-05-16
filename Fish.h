@@ -137,7 +137,7 @@ public:
 		return FishMouth().intersects(Creature.DangerZone());
 	}
 
-	bool DetectFish(std::vector<AutomaticFish>& autoFish, const float& time);
+	bool DetectFish(std::vector<AutomaticFish>& autoFish, const float& time, int& number_fish_eaten);
 	void Eat(std::vector<AutomaticFish>& autoFish, std::vector<AutomaticFish>::iterator it_del, const float& time);
 	void ChangeType();
 	int GetScore();
