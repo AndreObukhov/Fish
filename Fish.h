@@ -47,10 +47,11 @@ static std::map<FishType, sf::Vector2f> type_speed = { {FishType::L_1, {0.04, 0}
 
 
 enum class DirectionType {
-	UP, DOWN, LEFT, RIGHT
+	UP, DOWN, LEFT, RIGHT, NOWHERE
 };
 static std::map<DirectionType, float> directionType_angle = { {DirectionType::UP, 90}, {DirectionType::DOWN, 270},
-													   {DirectionType::RIGHT, 180}, {DirectionType::LEFT, 0} };
+													   {DirectionType::RIGHT, 180}, {DirectionType::LEFT, 0}, 
+													   {DirectionType::NOWHERE, 1}, };
 
 
 
@@ -63,6 +64,9 @@ public:
 	sf::Vector2f GetPosition() const;
 	FishType GetType() const;
 
+	float GetSpeed() const;
+	float GetAngle() const;
+
 	virtual ~Fish() = default;
 protected:
 	sf::Sprite fish_;
@@ -74,12 +78,29 @@ protected:
 	FishType type_;
 };
 
+class AnotherPlayerFish : public Fish {
+public:
+	//AnotherPlayerFish();
+	AnotherPlayerFish(const sf::Vector2f& pos, FishType type, float angle, DirectionType directionType, float speed);
+	void Draw(sf::RenderWindow& window);
+	void NetUpdate(const sf::Vector2f& pos, FishType type, float angle, DirectionType directionType, float speed);
+	void UpdatePosition(const float& time);
+	DirectionType GetDirectionType() const;
+
+	~AnotherPlayerFish() = default;
+private:
+	DirectionType current_direction = DirectionType::RIGHT;
+	float time_last_updated = 0.f;
+};
+
 class AutomaticFish : public Fish {
 public:
 	AutomaticFish(const sf::Vector2f& pos, FishType type, const float& time);
 	bool Draw(const float &time, sf::RenderWindow& window);
 
 	sf::FloatRect DangerZone() const;			//to make eating more realistic
+
+	virtual ~AutomaticFish() = default;
 private:
 	float time_created_;
 	sf::Vector2f  speed_;
@@ -119,6 +140,8 @@ public:
 	void ChangeType();
 	int GetScore();
 
+	DirectionType GetDirectionType() const;
+
 
 	void SpeedBoost(const float& time, const float& factor);
 	void CoinBoost(const int& points_added, const float& time);
@@ -146,7 +169,7 @@ private:
 
 	float previous_control_time = 0;
 	DirectionType previous_direction = DirectionType::RIGHT;
-
+	DirectionType current_direction = DirectionType::RIGHT;
 
 	//variables needed for displaying text above our fish
 	WindowText add_points_;

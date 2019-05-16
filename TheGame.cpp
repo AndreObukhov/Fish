@@ -229,7 +229,7 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 
 	ControlledFish fish({ 100, 100 }, FishType::L_1);		//starting from this
 
-	ControlledFish anotherFish({ 100, 100 }, FishType::L_1);
+	AnotherPlayerFish anotherFish({ 100, 100 }, FishType::L_1, 180.f, DirectionType::RIGHT, 550.f);
 
 	FishGeneration gen;				//fishes to eat
 	BoostGeneration boost;			//creatures that give you boosts
@@ -244,7 +244,6 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 	//special button added to end the game without death
 	Button CloseButton(close_button_image, 20.f, 20.f);
 
-	//Shrimp shrimp({ 220.f, 200.f }, 0);			//testing how it works
 
 	float time_sent = 0;			//for limiting number of send/receive during connection
 	
@@ -276,7 +275,7 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 		window.setView(view_);						//!!!Dont forget or view is useless
 
 		if (multiplayer_mode) {
-			if (time.asSeconds() - time_sent > 0.25f) {			//test
+			if (time.asSeconds() - time_sent > 0.3f) {			//test
 				//вынести в отдельный поток...
 				//----------network----------
 				net.SendMyFish(fish);
@@ -291,7 +290,8 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 		DrawEverything(background, fish, gen, boost, window, time.asSeconds());
 
 		if (multiplayer_mode) {
-			anotherFish.Draw(window, time.asSeconds());
+			anotherFish.UpdatePosition(time.asSeconds());
+			anotherFish.Draw(window);
 		}
 		//сюда добавляю передачу фона, чтобы вовремя его продлевать
 		fish.Control(TextureSize, window, background, time.asSeconds());
@@ -299,13 +299,17 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 		//adding time into function for score animation
 		if (fish.DetectFish(gen.autoCreature, time.asSeconds())) {
 			sf::SoundBuffer crash_sound;
+
 			if (!crash_sound.loadFromFile("C:/Users/User/MIPT/TheGame/Sounds/crash.wav"))
 				exit(-1);
+
 			sf::Sound sound;
 			sound.setBuffer(crash_sound);
 			sound.play();
+
 			sf::sleep(sf::milliseconds(1000));
 			std::cout << "YOU ARE DEAD!" << std::endl;
+
 			return ShowMenu(window, net, false, multiplayer_mode, fish.GetScore());			//returns true if restart
 		}
 
@@ -346,7 +350,7 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 
 		window.display();
 	}
-
+	return false;			//default value returned (no restart)
 }
 
 int main() {

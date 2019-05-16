@@ -7,6 +7,8 @@ Fish::Fish(const sf::Vector2f& pos, FishType type) {
 	type_ = type;
 	scale_ = type_scale[type];
 	LoadSprite();
+
+	//fish_.setTexture(tex_);
 }
 
 void Fish::LoadSprite() {
@@ -59,6 +61,14 @@ FishType Fish::GetType() const {
 	return type_;
 }
 
+float Fish::GetSpeed() const {
+	return speed_;
+}
+
+float Fish::GetAngle() const {
+	return angle_;
+}
+
 
 sf::FloatRect ControlledFish::FishMouth() const {					//counts current coordinates of what should be fish mouth
 	sf::FloatRect mouth = fish_.getGlobalBounds();
@@ -69,19 +79,19 @@ sf::FloatRect ControlledFish::FishMouth() const {					//counts current coordinat
 	{
 	case FishType::L_1:
 		mouth.top += 0.5f * fish_.getTexture()->getSize().y * scale_.y *(1.f + sin(angle_ - 180.f));
-		mouth.height *= 0.3f;
+		mouth.height *= 0.4f;
 		break;
 	case FishType::L_2:
 		mouth.top += 0.5f * fish_.getTexture()->getSize().y * scale_.y * (1.f + sin(angle_ - 180.f));
-		mouth.height *= 0.25f;
+		mouth.height *= 0.35f;
 		break;
 	case FishType::L_3:
 		mouth.top += 0.6f * fish_.getTexture()->getSize().y * scale_.y *(1.f + 0.5f * sin(angle_ - 180.f));
-		mouth.height *= 0.2f;
+		mouth.height *= 0.25f;
 		break;
 	case FishType::L_4:
 		mouth.top += 0.8f * fish_.getTexture()->getSize().y * scale_.y * (1 + 0.2f * sin(angle_ - 180.f));
-		mouth.height *= 0.1f;
+		mouth.height *= 0.2f;
 		break;
 	
 	default:
@@ -119,9 +129,12 @@ bool AutomaticFish::Draw(const float &time, sf::RenderWindow& window) {
 	//усложнить траекторию!
 	speed_.y = sin(5 * time) / ((5 + rand() % 5) + (10 + rand() % 10) * (time - time_created_));
 	pos_.y += speed_.y * (time - time_created_);
+
 	fish_.setTexture(tex_);
+
 	fish_.setScale(scale_);
 	fish_.scale(1.0f, -1.0f);
+
 	fish_.setPosition(pos_.x, pos_.y);
 	window.draw(fish_);
 
@@ -163,10 +176,15 @@ void ControlledFish::GradualRotate(DirectionType newDirectionType) {
 }
 
 void ControlledFish::Rotate(DirectionType newDirectionType) {
-	if (CheckSharpRotate(newDirectionType)) {
-		angle_ = directionType_angle[newDirectionType];
+	current_direction = newDirectionType;
+	
+	if (newDirectionType != DirectionType::NOWHERE) {
+		if (CheckSharpRotate(newDirectionType)) {
+			angle_ = directionType_angle[newDirectionType];
+		}
+		GradualRotate(newDirectionType);
 	}
-	GradualRotate(newDirectionType);
+
 	previous_direction = newDirectionType;
 }
 
@@ -180,14 +198,14 @@ void ControlledFish::Move(sf::Vector2u& TextureSize, Background& background, con
 			pos_.y += speed_ * dt;
 		}
 	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
 		Rotate(DirectionType::DOWN);
 		pos_.y += speed_ * dt;
 		if (!IsInsideWindow(TextureSize, pos_)) {
 			pos_.y -= speed_ * dt;
 		}
 	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
 		Rotate(DirectionType::RIGHT);
 		pos_.x += speed_ * dt;
 
@@ -198,14 +216,15 @@ void ControlledFish::Move(sf::Vector2u& TextureSize, Background& background, con
 		}
 
 	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
+	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
 		Rotate(DirectionType::LEFT);
 		pos_.x -= speed_ * dt;
 		if (!IsInsideWindow(TextureSize, pos_)) {
 			pos_.x += speed_ * dt;
 		}
+	} else {
+		Rotate(DirectionType::NOWHERE);
 	}
-
 }
 
 void ControlledFish::Laser(sf::RenderWindow& window, sf::Vector2f center, sf::Vector2f worldPos) {
@@ -253,7 +272,7 @@ void ControlledFish::Eat(std::vector<AutomaticFish>& autoFish,
 	
 	autoFish.erase(it_del);		//seems OK
 
-	//PlaySound(collect_point_sound_);
+	PlaySound(collect_point_sound_);
 	
 	if (points_ >= type_limit_points[type_])
 		ChangeType();
@@ -269,8 +288,13 @@ void ControlledFish::ChangeType() {
 	type_ = static_cast<FishType> (type);
 	scale_ = type_scale[type_];
 	LoadSprite();
+
+	fish_.setTexture(tex_);
 }
 
+DirectionType ControlledFish::GetDirectionType()  const {
+	return current_direction;
+}
 
 //return true if you died
 bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish, const float& time) {
@@ -416,6 +440,69 @@ void ControlledFish::PlaySound(sf::SoundBuffer buffer) {
 	sound.setBuffer(buffer);
 	//sound.setVolume(20);
 	sound.play();
+}
+
+//AnotherPlayerFish::AnotherPlayerFish() {}
+
+AnotherPlayerFish::AnotherPlayerFish(const sf::Vector2f& pos, FishType type, float angle,
+	DirectionType directionType, float speed) : Fish(pos, type) {
+
+	fish_.setTexture(tex_);
+	fish_.setScale(scale_);
+
+	angle_ = angle;
+	current_direction = directionType;
+	speed_ = speed;
+}
+
+void AnotherPlayerFish::NetUpdate(const sf::Vector2f& pos, FishType type, float angle,
+									DirectionType directionType, float speed) {
+	pos_ = pos;
+	type_ = type;
+	angle_ = angle;
+	current_direction = directionType;
+	speed_ = speed;
+}
+
+
+void AnotherPlayerFish::UpdatePosition(const float& time) {
+	float dt = time - time_last_updated;
+
+	if (current_direction == DirectionType::RIGHT) {
+		pos_.x += speed_ * dt;
+	}
+	if (current_direction == DirectionType::LEFT) {
+		pos_.x -= speed_ * dt;
+	}
+	if (current_direction == DirectionType::UP) {
+		pos_.y -= speed_ * dt;
+	}
+	if (current_direction == DirectionType::DOWN) {
+		pos_.y += speed_ * dt;
+	}
+
+	//pos_.x = speed_ * dt * cos(angle_ - 180);
+	//pos_.y = speed_ * dt * sin(angle_ - 180);
+
+	fish_.setPosition(pos_.x, pos_.y);
+
+	time_last_updated = time;
+}
+
+
+void AnotherPlayerFish::Draw(sf::RenderWindow& window) {
+	//fish_.scale(1.0f, -1.0f);
+	fish_.setTexture(tex_);
+	fish_.setScale(scale_);
+	//fish_.setPosition(pos_.x, pos_.y);
+	fish_.setRotation(angle_);
+	if (((angle_ >= 0) && (angle_ < 90)) || ((angle_ > 270) && (angle_ < 360)))
+		fish_.scale(1.0f, -1.0f);
+	window.draw(fish_);
+}
+
+DirectionType AnotherPlayerFish::GetDirectionType()  const {
+	return current_direction;
 }
 
 

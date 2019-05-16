@@ -11,15 +11,15 @@ using namespace std;
 
 class Network {
 private:
-    sf::IpAddress ip;
-    sf::TcpSocket socket;
-    char connectionType;
+	sf::IpAddress ip;
+	sf::TcpSocket socket;
+	char connectionType;
 
 public:
-    Network();
-    void CreateConnection();
-    void GetAnotherFish(ControlledFish& otherFish);
-    void SendMyFish(const ControlledFish& myFish);
+	Network();
+	void CreateConnection();
+	void GetAnotherFish(AnotherPlayerFish& otherFish);
+	void SendMyFish(const ControlledFish& myFish);
 
 };
 
