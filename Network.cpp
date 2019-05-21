@@ -3,7 +3,7 @@
 #include "Network.h"
 
 Network::Network() {
-	ip = "172.20.10.2";
+	ip = "192.168.1.47";
 }
 
 //void Network::CreateConnection() {
@@ -70,7 +70,7 @@ void Network::GetAnotherFish(AnotherPlayerFish& anotherFish, std::vector<Automat
 		if (packet >> pos.x >> pos.y >> type >> angle >> directionType >> speed) {
 			anotherFish.NetUpdate(pos, static_cast<FishType> (type), angle, static_cast<DirectionType>(directionType), speed);
 			//testing
-			std::cout << "anotherFish recieved! " << std::endl;
+			//std::cout << "anotherFish recieved! " << std::endl;
 		//        std::cout << anotherFish.GetPosition().x << " " << anotherFish.GetPosition().y << " "
 		//                  << static_cast<int> (anotherFish.GetType()) << " "
 		//                  << anotherFish.GetAngle() << " "
@@ -92,7 +92,7 @@ void Network::GetAnotherFish(AnotherPlayerFish& anotherFish, std::vector<Automat
 		if (packet >> index) {
 			auto it = fishes.begin() + index;
 			fishes.erase(it);
-			std::cout << "Fish from server erased sucessfully" << std::endl;
+			std::cout << "Fish from server erased successfully" << std::endl;
 		}
 	}
 }

@@ -66,7 +66,7 @@ public:
 	sf::Vector2f GetPosition() const;
 	FishType GetType() const;
 
-	float GetSpeed() const;
+	virtual float GetSpeed() const;
 	float GetAngle() const;
 
 	virtual ~Fish() = default;
@@ -141,6 +141,7 @@ public:
 	void Eat(std::vector<AutomaticFish>& autoFish, std::vector<AutomaticFish>::iterator it_del, const float& time);
 	void ChangeType();
 	int GetScore();
+	float GetSpeed() const;
 
 	DirectionType GetDirectionType() const;
 

@@ -325,7 +325,7 @@ bool ControlledFish::DetectFish(std::vector<AutomaticFish>& autoFish, const floa
 	}
 
 	if (poedanie) {
-		int number_fish_eaten = to_eat - autoFish.begin();
+		number_fish_eaten = to_eat - autoFish.begin();
 		std::cout << number_fish_eaten << std::endl;
 		Eat(autoFish, to_eat, time);
 	}
@@ -367,6 +367,14 @@ void ControlledFish::Draw(sf::RenderWindow& window, const float& time) {
 		PointsAnimation(window, time);
 }
 
+float ControlledFish::GetSpeed() const {
+	if (is_boost_applied) {
+		return speed_;
+	}
+	else {
+		return speed_ * boost_factor;
+	}
+}
 
 void ControlledFish::SpeedBoost(const float& time, const float& factor) {
 	if (!is_boost_applied) {		//если до этого нет ни одного буста (ускорителя)
@@ -466,6 +474,9 @@ void AnotherPlayerFish::NetUpdate(const sf::Vector2f& pos, FishType type, float 
 									DirectionType directionType, float speed) {
 	pos_ = pos;
 	type_ = type;
+	LoadSprite();
+	scale_ = type_scale[type_];
+
 	angle_ = angle;
 	current_direction = directionType;
 	speed_ = speed;

@@ -12,7 +12,7 @@
 #include "SFML/Graphics.hpp"
 
 const std::string button_file = "C:/Users/User/MIPT/TheGame/Images/ButtonOne.png";
-
+const std::string shark_file = "C:/Users/User/MIPT/TheGame/Images/Shark.png";
 
 std::string to_str(int a);
 

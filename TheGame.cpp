@@ -71,9 +71,8 @@ bool IsInsideWindow(sf::Vector2u WSize, sf::Vector2f Position) {
 	}
 }
 
-//maybe написать единую (шаблонную?) функцию для проверки взаимного расположения рыба-окно, рыба-крючок, рыба-другая рыба
 
-bool IsOnTheHook(const sf::Sprite& sprite, const sf::Vector2f& hook_pos) {		//с делением на 2 работает +- как надо
+bool IsOnTheHook(const sf::Sprite& sprite, const sf::Vector2f& hook_pos) {
 	if (abs(sprite.getPosition().x - hook_pos.x) < sprite.getTexture()->getSize().x * sprite.getScale().x/2 &&
 		abs(sprite.getPosition().y - hook_pos.y) < sprite.getTexture()->getSize().y * sprite.getScale().y/2) {
 		return true;
@@ -194,19 +193,42 @@ void DrawEverything(Background& background, ControlledFish& fish, FishGeneration
 	boost.Generate(time, fish);		//applying boost to the fish is inside of this function
 	boost.Draw(time, window);
 
-	if (!multipayer_mode) {
-		gen.GenerateFish(time, fish.GetPosition());			//сюда передаем фон, чтобы с его обновлением рисовалось корректно
+	if (!multipayer_mode) {		//not multiplayer => own generation 
+		gen.GenerateFish(time, fish.GetPosition());
 	}
 	gen.Draw(time, window);
 }
 
+
+struct NetworkCommunicator {
+	ControlledFish& MyFish;
+	AnotherPlayerFish& AnotherFish;
+	std::vector<AutomaticFish>& autoFish;
+	Network& network;
+	float client_time;
+
+	void Send() {
+		network.SendMyFish(MyFish);
+		network.GetAnotherFish(AnotherFish, autoFish, client_time);
+	}
+
+	/*void Update(const ControlledFish& NewFish, const AnotherPlayerFish& apf,
+				const std::vector<AutomaticFish>& new_vector, const float& time) {
+		MyFish = NewFish;
+		AnotherFish = apf;
+		autoFish = new_vector;
+		client_time = time;
+	}*/
+};
+
+
 bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if restart, false if exit.
 
-	sf::Music music;
+	/*sf::Music music;
 	music.openFromFile("C:/Users/User/MIPT/TheGame/Sounds/hard_fish.wav");
 	music.setVolume(10);
 	music.setLoop(true);
-	music.play();
+	music.play();*/
 
 	bool multiplayer_mode = false;
 
@@ -251,6 +273,10 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 	int number_fish_eaten = -1;				//number of fish that is eaten by client
 											//-1 if client eats no fishes
 	
+	//made to use threads
+	NetworkCommunicator NC = {fish, anotherFish, gen.autoCreature, net, 0};
+	
+	clock.restart();		//for restart button
 
 	while (window.isOpen())
 	{
@@ -279,18 +305,23 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 		window.setView(view_);						//!!!Dont forget or view is useless
 
 		if (multiplayer_mode) {
+
 			if (number_fish_eaten != -1) {
 				net.FishEaten(number_fish_eaten);
 				number_fish_eaten = -1;
 			}
 
-			if (time.asSeconds() - time_sent > 0.3f) {			//test
-				//вынести в отдельный поток...
+			if (time.asSeconds() - time_sent > 0.2f) {
 				//----------network----------
-				net.SendMyFish(fish);
+				//net.SendMyFish(fish);
+
+				//NC.Update(fish, anotherFish, gen.autoCreature, time.asSeconds());
+
+				sf::Thread multiplayer_thread(&NetworkCommunicator::Send, &NC);
+				multiplayer_thread.launch();
 
 				//передаем вектор рыб, управляемых компом, чтобы была генерация как на сервере
-				net.GetAnotherFish(anotherFish, gen.autoCreature, time.asSeconds());
+				//net.GetAnotherFish(anotherFish, gen.autoCreature, time.asSeconds());
 				//---------------------------
 				time_sent = time.asSeconds();
 			}

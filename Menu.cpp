@@ -103,6 +103,7 @@ bool ShowMenu(sf::RenderWindow& window, Network& net, bool EntryMenu, bool& mult
 	Button Restart("restart", 400.f);
 	Button Exit("exit", 500.f);
 	Button Back("back", 700.f);
+	Button Shark("           ???", 800.f);
 
 	Background background(window, 2);
 	
@@ -115,6 +116,17 @@ bool ShowMenu(sf::RenderWindow& window, Network& net, bool EntryMenu, bool& mult
 	WindowText game_result(40);
 
 	sf::Clock clock;
+
+	/*
+	//pashalka
+	sf::Texture shark_tex;
+	if (!shark_tex.loadFromFile(shark_file)) {
+		exit(-1);
+	}
+	sf::Sprite shark;
+	shark.setTexture(shark_tex);
+	shark.setPosition({ 300.f, 300.f });
+	*/
 	
 	while (window.isOpen()) {
 		sf::Event event;
@@ -134,6 +146,7 @@ bool ShowMenu(sf::RenderWindow& window, Network& net, bool EntryMenu, bool& mult
 		if (EntryMenu) {
 			ButtonOnePlayer.draw(window);
 			ButtonTwoPlayers.draw(window);
+			Shark.draw(window);
 		}
 
 		Highscore.draw(window);
@@ -164,6 +177,36 @@ bool ShowMenu(sf::RenderWindow& window, Network& net, bool EntryMenu, bool& mult
 				multiplayer_mode = true;
 				net.CreateConnection();
 				break;
+			}
+
+			if (EntryMenu && Shark.IsClicked(worldPos)) {
+				WindowText otl(40);
+
+				while (1) {			//loop displaying secret menu
+					MousePos = sf::Mouse::getPosition(window);
+					worldPos = window.mapPixelToCoords(MousePos);
+
+					while (window.pollEvent(event))
+					{
+						if (event.type == sf::Event::Closed) {
+							window.close();
+							exit(0);
+						}
+					}
+
+					window.clear();
+
+					background.draw(window);
+					Back.draw(window);
+					otl.Display(window, { 50, 75 }, " do you want to appreciate\n all the hard work and suffer?");
+
+					//window.draw(shark);
+
+					if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && Back.IsClicked(worldPos)) {
+						break;
+					}
+					window.display();
+				}
 			}
 
 			if (Highscore.IsClicked(worldPos)) {
