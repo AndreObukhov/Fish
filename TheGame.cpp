@@ -126,7 +126,7 @@ public:
 		}
 		hook_sprite.setTexture(hook_texture);
 		hook_sprite.setScale(0.05f, 0.05f);
-	};			
+	};
 	bool IsAttacking() {
 		if (depth >= 20) {
 			return true;
@@ -187,7 +187,7 @@ void DrawEverything(Background& background, ControlledFish& fish, FishGeneration
 	background.draw(window);
 	background.Bubbles(fish.GetPosition().x, time, window);
 
-	//рисуем рыб
+	//рисуем рыбy
 	fish.Draw(window, time);
 
 	boost.Generate(time, fish);		//applying boost to the fish is inside of this function
@@ -210,6 +210,10 @@ struct NetworkCommunicator {
 	void Send() {
 		network.SendMyFish(MyFish);
 		network.GetAnotherFish(AnotherFish, autoFish, client_time);
+	}
+
+	void UpdateTime(const float& time) {
+		client_time = time;
 	}
 
 	/*void Update(const ControlledFish& NewFish, const AnotherPlayerFish& apf,
@@ -263,6 +267,7 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 	float score = 0;
 
 	WindowText score_text(20);
+	WindowText another_player_score_text(20);
 
 	//special button added to end the game without death
 	Button CloseButton(close_button_image, 20.f, 20.f);
@@ -277,7 +282,7 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 	NetworkCommunicator NC = {fish, anotherFish, gen.autoCreature, net, 0};
 	
 	clock.restart();		//for restart button
-
+	
 	while (window.isOpen())
 	{
 		sf::Time time = clock.getElapsedTime();
@@ -306,6 +311,8 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 
 		if (multiplayer_mode) {
 
+			NC.UpdateTime(time.asSeconds());
+
 			if (number_fish_eaten != -1) {
 				net.FishEaten(number_fish_eaten);
 				number_fish_eaten = -1;
@@ -315,8 +322,6 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 				//----------network----------
 				//net.SendMyFish(fish);
 
-				//NC.Update(fish, anotherFish, gen.autoCreature, time.asSeconds());
-
 				sf::Thread multiplayer_thread(&NetworkCommunicator::Send, &NC);
 				multiplayer_thread.launch();
 
@@ -324,6 +329,7 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 				//net.GetAnotherFish(anotherFish, gen.autoCreature, time.asSeconds());
 				//---------------------------
 				time_sent = time.asSeconds();
+				//std::cout << gen.autoCreature.size() << std::endl;
 			}
 		}
 
@@ -353,10 +359,16 @@ bool GameStart(sf::RenderWindow& window, Network& net) {		//returns true if rest
 
 			return ShowMenu(window, net, false, multiplayer_mode, fish.GetScore());			//returns true if restart
 		}
-
+		
 		//drawing score text in right top corner
-		score_text.Display(window, window.mapPixelToCoords({ (int)window.getSize().x - 300, 10 }),
+		int text_pos_x = (int)window.getSize().x * 0.8;
+		score_text.Display(window, window.mapPixelToCoords({text_pos_x, 10 }),
 			"score: " + to_str(fish.GetScore()));
+
+		if (multiplayer_mode) {
+			score_text.Display(window, window.mapPixelToCoords({ text_pos_x, 50 }),
+				"opponent: " + to_str(anotherFish.GetScore()));
+		}
 
 		//close button in left top corner
 		CloseButton.dynamicDraw(window, window.mapPixelToCoords({ 20, 20 }));

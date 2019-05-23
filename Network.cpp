@@ -3,7 +3,9 @@
 #include "Network.h"
 
 Network::Network() {
-	ip = "192.168.1.47";
+	//ip = "172.20.10.3";				//iPhone
+	ip = "192.168.1.48";				//home
+	//ip = "192.168.1.72";				//423
 }
 
 //void Network::CreateConnection() {
@@ -62,13 +64,17 @@ void Network::GetAnotherFish(AnotherPlayerFish& anotherFish, std::vector<Automat
 	float angle;
 	int directionType;
 	float speed;
+	int points = 0;
+	//think about sending score
+
 	if (socket.receive(packet) == sf::Socket::NotReady) {
 		return;
 	}
 	packet >> packet_type;
 	if (packet_type == 1) {
-		if (packet >> pos.x >> pos.y >> type >> angle >> directionType >> speed) {
-			anotherFish.NetUpdate(pos, static_cast<FishType> (type), angle, static_cast<DirectionType>(directionType), speed);
+		if (packet >> pos.x >> pos.y >> type >> angle >> directionType >> speed >> points) {
+			anotherFish.NetUpdate(pos, static_cast<FishType> (type), angle,
+									static_cast<DirectionType>(directionType), speed, points);
 			//testing
 			//std::cout << "anotherFish recieved! " << std::endl;
 		//        std::cout << anotherFish.GetPosition().x << " " << anotherFish.GetPosition().y << " "
@@ -100,7 +106,7 @@ void Network::GetAnotherFish(AnotherPlayerFish& anotherFish, std::vector<Automat
 void Network::SendMyFish(const ControlledFish& myFish) {
 	sf::Packet packet;
 	packet << 1 << myFish.GetPosition().x << myFish.GetPosition().y << static_cast<int> (myFish.GetType())
-		<< myFish.GetAngle() << static_cast<int> (myFish.GetDirectionType()) << myFish.GetSpeed();
+		<< myFish.GetAngle() << static_cast<int> (myFish.GetDirectionType()) << myFish.GetSpeed() << myFish.GetScore();
 	socket.send(packet);
 }
 

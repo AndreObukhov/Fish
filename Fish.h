@@ -43,8 +43,8 @@ static std::map<FishType, int> type_points = { {FishType::L_1, 1}, {FishType::L_
 static std::map<FishType, int> type_limit_points = { {FishType::L_1, 10}, {FishType::L_2, 50},
 											 {FishType::L_3, 100}, {FishType::L_4, 150} };
 
-static std::map<FishType, sf::Vector2f> type_speed = { {FishType::L_1, {0.04, 0}}, {FishType::L_2, {0.07, 0}},
-											 {FishType::L_3, {0.09, 0}}, {FishType::L_4, {0.1, 0}} };
+static std::map<FishType, sf::Vector2f> type_speed = { {FishType::L_1, {250.f, 0.f}}, {FishType::L_2, {200.f, 0.f}},
+											 {FishType::L_3, {150.f, 0.f}}, {FishType::L_4, {100.f, 0.f}} };
 
 
 
@@ -85,12 +85,15 @@ public:
 	//AnotherPlayerFish();
 	AnotherPlayerFish(const sf::Vector2f& pos, FishType type, float angle, DirectionType directionType, float speed);
 	void Draw(sf::RenderWindow& window);
-	void NetUpdate(const sf::Vector2f& pos, FishType type, float angle, DirectionType directionType, float speed);
+	void NetUpdate(const sf::Vector2f& pos, FishType type, const float& angle,
+		DirectionType directionType, const float& speed, const int& points);
 	void UpdatePosition(const float& time);
 	DirectionType GetDirectionType() const;
+	int GetScore() const;
 
 	~AnotherPlayerFish() = default;
 private:
+	int points_ = 0;
 	DirectionType current_direction = DirectionType::RIGHT;
 	float time_last_updated = 0.f;
 };
@@ -104,8 +107,9 @@ public:
 
 	virtual ~AutomaticFish() = default;
 private:
-	float time_created_;
-	sf::Vector2f  speed_;
+	float time_created_;			//lifetime is fixed
+	float time_last_updated_ = time_created_;		//same values when fish is created
+	sf::Vector2f auto_speed_;
 };
 
 
@@ -140,7 +144,7 @@ public:
 	bool DetectFish(std::vector<AutomaticFish>& autoFish, const float& time, int& number_fish_eaten);
 	void Eat(std::vector<AutomaticFish>& autoFish, std::vector<AutomaticFish>::iterator it_del, const float& time);
 	void ChangeType();
-	int GetScore();
+	int GetScore() const;
 	float GetSpeed() const;
 
 	DirectionType GetDirectionType() const;

@@ -7,8 +7,6 @@ Fish::Fish(const sf::Vector2f& pos, FishType type) {
 	type_ = type;
 	scale_ = type_scale[type];
 	LoadSprite();
-
-	//fish_.setTexture(tex_);
 }
 
 void Fish::LoadSprite() {
@@ -69,8 +67,12 @@ float Fish::GetAngle() const {
 	return angle_;
 }
 
+int ControlledFish::GetScore() const {
+	return points_;
+}
 
-sf::FloatRect ControlledFish::FishMouth() const {					//counts current coordinates of what should be fish mouth
+
+sf::FloatRect ControlledFish::FishMouth() const {			//calculates current coordinates of what should be fish mouth
 	sf::FloatRect mouth = fish_.getGlobalBounds();
 
 	//std::cout << "Before" << mouth.left << ":" << mouth.top << std::endl;
@@ -78,19 +80,19 @@ sf::FloatRect ControlledFish::FishMouth() const {					//counts current coordinat
 	switch (type_)
 	{
 	case FishType::L_1:
-		mouth.top += 0.5f * fish_.getTexture()->getSize().y * scale_.y *(1.f + sin(angle_ - 180.f));
+		mouth.top += 0.5f * fish_.getGlobalBounds().height *(1.f + sin(angle_ - 180.f));
 		mouth.height *= 0.4f;
 		break;
 	case FishType::L_2:
-		mouth.top += 0.5f * fish_.getTexture()->getSize().y * scale_.y * (1.f + sin(angle_ - 180.f));
+		mouth.top += 0.5f * fish_.getGlobalBounds().height *(1.f + sin(angle_ - 180.f));
 		mouth.height *= 0.35f;
 		break;
 	case FishType::L_3:
-		mouth.top += 0.6f * fish_.getTexture()->getSize().y * scale_.y *(1.f + 0.5f * sin(angle_ - 180.f));
+		mouth.top += 0.6f * fish_.getGlobalBounds().height *(1.f + 0.5f * sin(angle_ - 180.f));
 		mouth.height *= 0.25f;
 		break;
 	case FishType::L_4:
-		mouth.top += 0.8f * fish_.getTexture()->getSize().y * scale_.y * (1 + 0.2f * sin(angle_ - 180.f));
+		mouth.top += 0.8f * fish_.getGlobalBounds().height * (1 + 0.2f * sin(angle_ - 180.f));
 		mouth.height *= 0.2f;
 		break;
 	
@@ -98,7 +100,7 @@ sf::FloatRect ControlledFish::FishMouth() const {					//counts current coordinat
 		break;
 	}
 
-	mouth.left += 0.4f * fish_.getTexture()->getSize().x * scale_.x * (1.f + cos(angle_ - 180.f));
+	mouth.left += 0.4f * fish_.getGlobalBounds().width *(1.f + cos(angle_ - 180.f));
 	mouth.width *= 0.2f;
 
 	//std::cout << "After" << mouth.left << ":" << mouth.top << std::endl;
@@ -108,30 +110,31 @@ sf::FloatRect ControlledFish::FishMouth() const {					//counts current coordinat
 
 sf::FloatRect AutomaticFish::DangerZone() const {		//fish is eaten only "face to face"
 	sf::FloatRect body = fish_.getGlobalBounds();
-	body.top += 0.2f * fish_.getTexture()->getSize().y * scale_.y;
-	body.height *= 0.6f;
-	body.left -= 0.1 * fish_.getTexture()->getSize().x * scale_.x;
-	body.width *= 0.8f;
+	body.top += 0.35f * fish_.getGlobalBounds().height;
+	body.height *= 0.5f;
+	body.left -= 0.2 * fish_.getGlobalBounds().width;
+	body.width *= 0.3f;
 	return body;
 }
 
 
 AutomaticFish::AutomaticFish(const sf::Vector2f& pos, FishType type, const float& time) : 
-	Fish(pos, type), time_created_(time) {
-	speed_ = type_speed[type];
+	Fish(pos, type), time_created_(time), time_last_updated_(time) {
+	auto_speed_ = type_speed[type];
 }
 
 
 
-//return true if fish is outside window
+//return true if fish is too old :)
 bool AutomaticFish::Draw(const float &time, sf::RenderWindow& window) {
-	pos_.x -= speed_.x * (time - time_created_);
-	//усложнить траекторию!
-	speed_.y = sin(5 * time) / ((5 + rand() % 5) + (10 + rand() % 10) * (time - time_created_));
-	pos_.y += speed_.y * (time - time_created_);
+	pos_.x -= auto_speed_.x * (time - time_last_updated_);
+	time_last_updated_ = time;
+	
+	auto_speed_.y = sin(5 * time) / ((5 + rand() % 5) + (10 + rand() % 10) * (time - time_created_));
+	pos_.y += auto_speed_.y * (time - time_created_);
 
 	fish_.setTexture(tex_);
-
+	
 	fish_.setScale(scale_);
 	fish_.scale(1.0f, -1.0f);
 
@@ -349,17 +352,17 @@ void ControlledFish::Draw(sf::RenderWindow& window, const float& time) {
 	//drawing progress bar until the next level
 	if (type_ != FishType::L_4) {
 		if (type_ == FishType::L_1)
-			bar_.Draw(window, points_, type_limit_points[type_], 80);
+			bar_.Draw(window, points_, type_limit_points[type_], 120);
 		else {
 			int prev_type = static_cast<int> (type_) - 1;
 			bar_.Draw(window, points_ - type_limit_points[static_cast<FishType> (prev_type)],
-				type_limit_points[type_] - type_limit_points[static_cast<FishType> (prev_type)], 80);
+				type_limit_points[type_] - type_limit_points[static_cast<FishType> (prev_type)], 120);
 		}
 	}
 	
 	//drawing a bar indicating how much boost is left
 	if (is_boost_applied) {
-		boost_bar_.Draw(window, 1.f - (time - time_boost_applied), 1.f, 130);
+		boost_bar_.Draw(window, 1.f - (time - time_boost_applied), 1.f, 150);
 	}
 
 	//+pts animation above the fish
@@ -431,11 +434,6 @@ void ControlledFish::PointsAnimation(sf::RenderWindow& window, const double& tim
 	add_points_.Display(window, delta_pts_pos, plus_pts_string);
 }
 
-
-int ControlledFish::GetScore() {
-	return points_;
-}
-
 //fish grows gradually
 void ControlledFish::Resize() {
 	if (type_ != FishType::L_4) {
@@ -470,8 +468,8 @@ AnotherPlayerFish::AnotherPlayerFish(const sf::Vector2f& pos, FishType type, flo
 	speed_ = speed;
 }
 
-void AnotherPlayerFish::NetUpdate(const sf::Vector2f& pos, FishType type, float angle,
-									DirectionType directionType, float speed) {
+void AnotherPlayerFish::NetUpdate(const sf::Vector2f& pos, FishType type, const float& angle,
+									DirectionType directionType, const float& speed, const int& points) {
 	pos_ = pos;
 	type_ = type;
 	LoadSprite();
@@ -480,7 +478,13 @@ void AnotherPlayerFish::NetUpdate(const sf::Vector2f& pos, FishType type, float 
 	angle_ = angle;
 	current_direction = directionType;
 	speed_ = speed;
+	points_ == points;
 }
+
+int AnotherPlayerFish::GetScore() const {
+	return points_;
+}
+
 
 
 void AnotherPlayerFish::UpdatePosition(const float& time) {
